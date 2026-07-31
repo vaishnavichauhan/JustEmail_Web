@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -146,19 +146,63 @@ export default function BusinessEmailsSection({
   onOpenAuthModal?: (mode: "login" | "signup") => void;
 }) {
   const [startIndex, setStartIndex] = useState(0);
+  const [cards, setCards] = useState<BusinessEmailCard[]>(businessEmailCards);
+
+  useEffect(() => {
+    async function fetchDynamicProviders() {
+      try {
+        const res = await fetch("/api/providers");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+            const enabledList = data.data.filter((p: any) => p.enabled !== false);
+            if (enabledList.length > 0) {
+              // Group by provider logoType/group and keep ONLY the latest plan for each provider
+              const latestProviderMap = new Map<string, any>();
+
+              enabledList.forEach((p: any) => {
+                const groupKey = (p.logoType || p.id).toLowerCase();
+                latestProviderMap.set(groupKey, p); // keeps the latest plan per provider group
+              });
+
+              const latestCards = Array.from(latestProviderMap.values()).map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                subtitle: p.subtitle || p.name,
+                badge: p.badge || "Official Provider",
+                price: p.price,
+                period: p.period || "/ user / month",
+                billingNote: p.billingNote || "Billed annually",
+                storage: p.storage,
+                uptime: p.uptime,
+                recommendedUsers: p.recommendedUsers || "1 - 100 Users",
+                logoType: (p.logoType || "custom").toLowerCase() as any,
+                features: Array.isArray(p.features) ? p.features : [],
+              }));
+
+              setCards(latestCards);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load providers from API:", e);
+      }
+    }
+    fetchDynamicProviders();
+  }, []);
 
   const handlePrev = () => {
-    setStartIndex((prev) => (prev === 0 ? businessEmailCards.length - 3 : Math.max(0, prev - 1)));
+    setStartIndex((prev) => (prev === 0 ? Math.max(0, cards.length - 3) : Math.max(0, prev - 1)));
   };
 
   const handleNext = () => {
-    setStartIndex((prev) => (prev + 3 >= businessEmailCards.length ? 0 : prev + 1));
+    setStartIndex((prev) => (prev + 3 >= cards.length ? 0 : prev + 1));
   };
 
-  const visibleCards = businessEmailCards.slice(startIndex, startIndex + 3);
+  const visibleCards = cards.slice(startIndex, startIndex + 3);
 
-  if (visibleCards.length < 3) {
-    visibleCards.push(...businessEmailCards.slice(0, 3 - visibleCards.length));
+  if (visibleCards.length < 3 && cards.length >= 3) {
+    visibleCards.push(...cards.slice(0, 3 - visibleCards.length));
   }
 
   const renderLogo = (logoType: string, isDark?: boolean) => {
@@ -281,8 +325,8 @@ export default function BusinessEmailsSection({
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.4, delay: idx * 0.1 }}
                     className={`rounded-2xl p-7 md:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${isCenterCard
-                        ? "bg-[#0B1437] text-white shadow-2xl border border-slate-800 md:-translate-y-2 md:scale-105 z-20"
-                        : "bg-white text-gray-900 shadow-md hover:shadow-xl border border-gray-100 z-10"
+                      ? "bg-[#0B1437] text-white shadow-2xl border border-slate-800 md:-translate-y-2 md:scale-105 z-20"
+                      : "bg-white text-gray-900 shadow-md hover:shadow-xl border border-gray-100 z-10"
                       }`}
                   >
                     {/* Background Subtle Mail Outline */}
@@ -294,8 +338,8 @@ export default function BusinessEmailsSection({
                       {/* Top Highlight Badge */}
                       <div className="mb-4">
                         <span className={`inline-block px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase ${isDark
-                            ? "bg-blue-500/20 text-blue-300 border border-blue-400/30"
-                            : "bg-blue-50 text-blue-700 border border-blue-100"
+                          ? "bg-blue-500/20 text-blue-300 border border-blue-400/30"
+                          : "bg-blue-50 text-blue-700 border border-blue-100"
                           }`}>
                           {card.badge}
                         </span>
@@ -311,13 +355,12 @@ export default function BusinessEmailsSection({
                           <p className={`text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-500"}`}>
                             {card.subtitle}
                           </p>
-                          <Link 
+                          <Link
                             href={`/business-emails/${card.logoType === 'google' ? 'google-workspace' : card.logoType === 'microsoft' ? 'microsoft-365' : card.logoType === 'zoho' ? 'zoho-mail' : card.logoType === 'rediff' ? 'rediffmail-pro' : 'titan-mail'}`}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all border ${
-                              isDark 
-                                ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/30 hover:text-white" 
-                                : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
-                            }`}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all border ${isDark
+                              ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/30 hover:text-white"
+                              : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
+                              }`}
                           >
                             <span>Explore {card.name} Page</span>
                             <ArrowRight className="w-3 h-3" />
@@ -373,16 +416,29 @@ export default function BusinessEmailsSection({
                         </div>
                       </div>
 
-                      <Link
-                        href={`/checkout?plan=${card.id === 'google' ? 'google-starter' : card.id === 'microsoft' ? 'ms-basic' : card.id === 'zoho' ? 'zoho-lite' : card.id === 'rediff' ? 'rediff-starter' : 'titan-lite'}`}
-                        className={`rounded-xl px-5 py-2.5 text-xs font-bold flex items-center gap-1.5 transition-all duration-300 ${isDark
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/enquiryForm?provider=${encodeURIComponent(card.name || "")}&plan=${encodeURIComponent(`${card.subtitle || card.name} (${card.price || ""})`)}&providerId=${encodeURIComponent(card.id || "")}`}
+                          className={`rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-300 border ${isDark
+                            ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/40 hover:text-white"
+                            : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
+                            }`}
+                        >
+                          <span>Enquiry now</span>
+                        </Link>
+                        {/* <Link
+                          href={`/checkout?plan=${card.id === 'google' ? 'google-starter' :
+                            card.id === 'microsoft' ? 'ms-basic' : card.id === 'zoho' ? 'zoho-lite'
+                              : card.id === 'rediff' ? 'rediff-starter' : 'titan-lite'}`}
+                          className={`rounded-xl px-4 py-2.5 text-xs font-bold flex items-center gap-1.5 transition-all duration-300 ${isDark
                             ? "bg-white text-[#0B1437] hover:bg-gray-100 shadow-sm"
                             : "bg-[#0B1437] text-white hover:bg-black shadow-sm"
-                          }`}
-                      >
-                        <span>Buy Now</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
+                            }`}
+                        >
+                          <span>Buy Now</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link> */}
+                      </div>
                     </div>
                   </motion.div>
                 );

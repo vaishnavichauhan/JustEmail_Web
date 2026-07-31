@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Check, 
@@ -331,11 +331,113 @@ export default function ProviderPlansSection({
 }: {
   onOpenAuthModal?: (mode: "login" | "signup") => void;
 }) {
+  const [tabs, setTabs] = useState<ProviderTab[]>(providerTabs);
+  const [plansData, setPlansData] = useState<Record<string, PlanItem[]>>(providerPlansData);
   const [selectedProviderTab, setSelectedProviderTab] = useState<string>("google");
+
   const { toggleComparePlan, isPlanSelected } = useCompare();
   const { addToCart } = useCart();
 
-  const currentPlans = providerPlansData[selectedProviderTab] || providerPlansData["google"];
+  useEffect(() => {
+    async function fetchDynamicProviderPlans() {
+      try {
+        const res = await fetch("/api/providers");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+            const enabledList = data.data.filter((p: any) => p.enabled !== false);
+            if (enabledList.length > 0) {
+              const newTabsMap = new Map<string, ProviderTab>();
+              const newPlansMap: Record<string, PlanItem[]> = {};
+
+              enabledList.forEach((p: any) => {
+                const groupKey = (p.logoType || "google").toLowerCase().trim();
+                const logoPath = `/images/${
+                  groupKey === "google"
+                    ? "google-workspace"
+                    : groupKey === "microsoft"
+                    ? "microsoft-365"
+                    : groupKey === "zoho"
+                    ? "zoho-mail"
+                    : groupKey === "rediff"
+                    ? "rediffmail"
+                    : groupKey === "titan"
+                    ? "titan-mail"
+                    : "justemail-logo"
+                }.png`;
+
+                const providerDisplayName =
+                  groupKey === "google"
+                    ? "Google Workspace"
+                    : groupKey === "microsoft"
+                    ? "Microsoft 365"
+                    : groupKey === "zoho"
+                    ? "Zoho Mail"
+                    : groupKey === "rediff"
+                    ? "Rediffmail Pro"
+                    : groupKey === "titan"
+                    ? "Titan Mail"
+                    : p.name;
+
+                if (!newTabsMap.has(groupKey)) {
+                  newTabsMap.set(groupKey, {
+                    id: groupKey,
+                    name: providerDisplayName,
+                    logo: logoPath,
+                    badge: p.badge || "Official Provider",
+                  });
+                }
+
+                if (!newPlansMap[groupKey]) {
+                  newPlansMap[groupKey] = [];
+                }
+
+                const newPlanItem: PlanItem = {
+                  id: p.id,
+                  providerId: groupKey,
+                  providerName: p.name || providerDisplayName,
+                  planName: p.subtitle || p.name,
+                  price: p.price,
+                  period: p.period || "/ user / month",
+                  logo: logoPath,
+                  storage: p.storage,
+                  sla: p.uptime,
+                  attachment: "30 MB",
+                  features: Array.isArray(p.features) ? p.features : [],
+                };
+
+                const existingIndex = newPlansMap[groupKey].findIndex((item) => item.id === p.id);
+                if (existingIndex > -1) {
+                  newPlansMap[groupKey][existingIndex] = newPlanItem;
+                } else {
+                  newPlansMap[groupKey].push(newPlanItem);
+                }
+              });
+
+              // Ensure standard fallback tabs are present if no custom plans exist for that provider
+              providerTabs.forEach((t) => {
+                if (!newTabsMap.has(t.id)) {
+                  newTabsMap.set(t.id, t);
+                  if (providerPlansData[t.id]) {
+                    newPlansMap[t.id] = [...providerPlansData[t.id]];
+                  }
+                }
+              });
+
+              const mergedTabs = Array.from(newTabsMap.values());
+              setTabs(mergedTabs);
+              setPlansData(newPlansMap);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load provider plans:", err);
+      }
+    }
+    fetchDynamicProviderPlans();
+  }, []);
+
+  const currentPlans = plansData[selectedProviderTab] || plansData["google"] || [];
 
   return (
     <section id="provider-plans" className="py-16 bg-[#F8FAFC]">
@@ -357,7 +459,7 @@ export default function ProviderPlansSection({
         {/* --- PROVIDERS SINGLE HORIZONTAL LINE TAB BAR --- */}
         <div className="mb-12">
           <div className="flex items-center justify-start md:justify-center gap-3 overflow-x-auto pb-4 no-scrollbar">
-            {providerTabs.map((tab) => {
+            {tabs.map((tab) => {
               const isSelected = selectedProviderTab === tab.id;
               return (
                 <button
@@ -505,18 +607,30 @@ export default function ProviderPlansSection({
                       </div>
                     </div>
 
-                    <Link
-                      href={`/checkout?plan=${plan.id}`}
-                      onClick={() => addToCart(plan, 1)}
-                      className={`rounded-xl px-5 py-2.5 text-xs font-extrabold flex items-center gap-1.5 transition-all duration-300 active:scale-95 ${
-                        isFeaturedCard 
-                          ? "bg-white text-[#0B1437] hover:bg-gray-100 shadow-md" 
-                          : "bg-[#0B1437] text-white hover:bg-black shadow-md"
-                      }`}
-                    >
-                      <span>Buy Now</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName || plan.providerId || "")}&plan=${encodeURIComponent(`${plan.planName || plan.subtitle || plan.name || ""} (${plan.price || ""})`)}&providerId=${encodeURIComponent(plan.id || "")}`}
+                        className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-300 border ${
+                          isFeaturedCard
+                            ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/40 hover:text-white"
+                            : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
+                        }`}
+                      >
+                        <span>Enquiry now</span>
+                      </Link>
+                      {/* <Link
+                        href={`/checkout?plan=${plan.id}`}
+                        onClick={() => addToCart(plan, 1)}
+                        className={`rounded-xl px-4 py-2.5 text-xs font-extrabold flex items-center gap-1.5 transition-all duration-300 active:scale-95 ${
+                          isFeaturedCard 
+                            ? "bg-white text-[#0B1437] hover:bg-gray-100 shadow-md" 
+                            : "bg-[#0B1437] text-white hover:bg-black shadow-md"
+                        }`}
+                      >
+                        <span>Buy Now</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link> */}
+                    </div>
                   </div>
                 </motion.div>
               );

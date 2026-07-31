@@ -241,11 +241,10 @@ export default function ComparePage() {
                     {selectedPlans.map((plan) => (
                       <td key={plan.id} className="p-6">
                         <Link
-                          href={`/checkout?plan=${plan.id}`}
-                          onClick={() => addToCart({ ...plan, amountNumeric: parseInt(plan.price.replace(/[^\d]/g, "")) || 99 }, 1)}
-                          className="w-full py-3 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
+                          href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName)}&plan=${encodeURIComponent(`${plan.planName} (${plan.price})`)}&providerId=${encodeURIComponent(plan.id)}`}
+                          className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
                         >
-                          <span>Buy Now</span>
+                          <span>Enquiry Now</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </td>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AuthModal from "@/components/AuthModal";
@@ -599,7 +599,66 @@ export default function SingleProviderPage({
   const resolvedParams = use(params);
   const providerSlug = resolvedParams.slug;
   const normalizedSlug = slugAliases[providerSlug] || providerSlug;
-  const provider = singleProviderData[normalizedSlug] || singleProviderData["google-workspace"];
+  const defaultProvider = singleProviderData[normalizedSlug] || singleProviderData["google-workspace"];
+
+  const [dynamicProviderData, setDynamicProviderData] = useState<ProviderData | null>(null);
+
+  useEffect(() => {
+    async function loadDynamicProvider() {
+      try {
+        const res = await fetch("/api/providers");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && Array.isArray(data.data)) {
+            const matching = data.data.filter((p: any) => {
+              if (p.enabled === false) return false;
+              const pId = p.id.toLowerCase();
+              const logoT = (p.logoType || "").toLowerCase();
+              const reqSlug = providerSlug.toLowerCase();
+              const normSlug = normalizedSlug.toLowerCase();
+
+              return (
+                pId === reqSlug ||
+                pId === normSlug ||
+                logoT === reqSlug ||
+                logoT === normSlug ||
+                normSlug.includes(logoT) ||
+                reqSlug.includes(pId)
+              );
+            });
+
+            if (matching.length > 0) {
+              const baseProvider = singleProviderData[normalizedSlug] || singleProviderData["google-workspace"];
+              const customPlans = matching.map((p: any) => ({
+                id: p.id,
+                providerId: normalizedSlug,
+                providerName: p.name,
+                planName: p.subtitle || p.name,
+                price: p.price,
+                period: p.period || "/ user / month",
+                logo: baseProvider?.logo || "/images/justemail-logo.png",
+                storage: p.storage,
+                sla: p.uptime,
+                attachment: "30 MB",
+                description: `${p.name} ${p.subtitle || ""} with ${p.storage} and ${p.uptime}.`,
+                features: Array.isArray(p.features) ? p.features : [],
+              }));
+
+              setDynamicProviderData({
+                ...baseProvider,
+                plans: customPlans.length > 0 ? customPlans : baseProvider.plans,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error loading dynamic provider slug page data:", err);
+      }
+    }
+    loadDynamicProvider();
+  }, [providerSlug, normalizedSlug]);
+
+  const provider = dynamicProviderData || defaultProvider;
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
@@ -802,18 +861,30 @@ export default function SingleProviderPage({
                       </div>
                     </div>
 
-                    <Link
-                      href={`/checkout?plan=${plan.id}`}
-                      onClick={() => addToCart(plan, 1)}
-                      className={`rounded-xl px-5 py-2.5 text-xs font-extrabold flex items-center gap-1.5 transition-all duration-300 active:scale-95 ${
-                        isFeatured 
-                          ? "bg-white text-[#0B1437] hover:bg-gray-100 shadow-md" 
-                          : "bg-[#0B1437] text-white hover:bg-black shadow-md"
-                      }`}
-                    >
-                      <span>Buy Now</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/enquiryForm?plan=${plan.id}&provider=${plan.providerId}`}
+                        className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-300 border ${
+                          isFeatured
+                            ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/40 hover:text-white"
+                            : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
+                        }`}
+                      >
+                        <span>Enquiry now</span>
+                      </Link>
+                      {/* <Link
+                        href={`/checkout?plan=${plan.id}`}
+                        onClick={() => addToCart(plan, 1)}
+                        className={`rounded-xl px-4 py-2.5 text-xs font-extrabold flex items-center gap-1.5 transition-all duration-300 active:scale-95 ${
+                          isFeatured 
+                            ? "bg-white text-[#0B1437] hover:bg-gray-100 shadow-md" 
+                            : "bg-[#0B1437] text-white hover:bg-black shadow-md"
+                        }`}
+                      >
+                        <span>Buy Now</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link> */}
+                    </div>
                   </div>
                 </div>
               );
@@ -925,11 +996,10 @@ export default function SingleProviderPage({
                   {provider.plans.map((p) => (
                     <td key={p.id} className="p-6">
                       <Link
-                        href={`/checkout?plan=${p.id}`}
-                        onClick={() => addToCart(p, 1)}
-                        className="w-full py-3 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
+                        href={`/enquiryForm?provider=${encodeURIComponent(provider.name)}&plan=${encodeURIComponent(`${p.planName || p.name} (${p.price})`)}&providerId=${encodeURIComponent(p.id)}`}
+                        className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
                       >
-                        <span>Buy Now</span>
+                        <span>Enquiry Now</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </td>

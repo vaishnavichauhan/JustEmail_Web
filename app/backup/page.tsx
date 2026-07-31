@@ -24,7 +24,7 @@ import {
   Zap,
   Layers,
   FolderArchive,
-  CloudCheck
+  Cloud
 } from "lucide-react";
 import Link from "next/link";
 
