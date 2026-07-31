@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 
 import { CompareProvider } from "@/lib/compareContext";
 import { CartProvider } from "@/lib/cartContext";
+import AuthProvider from "@/components/AuthProvider";
 import BackToTop from "@/components/BackToTop";
 
 export default function RootLayout({
@@ -36,12 +37,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased selection:bg-primary selection:text-white bg-background text-foreground">
-        <CompareProvider>
-          <CartProvider>
-            {children}
-            <BackToTop />
-          </CartProvider>
-        </CompareProvider>
+        <AuthProvider>
+          <CompareProvider>
+            <CartProvider>
+              {children}
+              <BackToTop />
+            </CartProvider>
+          </CompareProvider>
+        </AuthProvider>
       </body>
     </html>
   );

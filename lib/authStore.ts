@@ -7,6 +7,7 @@ export interface UserProfile {
   fullName: string;
   email: string;
   role?: "admin" | "reseller" | "user";
+  token?: string | null;
 }
 
 export interface RegisteredAccount {
@@ -18,9 +19,10 @@ export interface RegisteredAccount {
 
 interface AuthState {
   user: UserProfile | null;
+  token: string | null;
   isAuthenticated: boolean;
   registeredUsers: RegisteredAccount[];
-  login: (userData: UserProfile) => void;
+  login: (userData: UserProfile, token?: string) => void;
   signup: (account: RegisteredAccount) => void;
   registerAccount: (account: RegisteredAccount) => void;
   logout: () => void;
@@ -30,11 +32,13 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
       registeredUsers: [],
-      login: (userData: UserProfile) =>
+      login: (userData: UserProfile, token?: string) =>
         set({
           user: userData,
+          token: token || userData.token || null,
           isAuthenticated: true,
         }),
       signup: (account: RegisteredAccount) =>
@@ -44,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
           );
           return {
             user: { fullName: account.fullName, email: account.email, role: account.role || "user" },
+            token: null,
             isAuthenticated: true,
             registeredUsers: [
               ...existing,
@@ -76,6 +81,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () =>
         set({
           user: null,
+          token: null,
           isAuthenticated: false,
         }),
     }),

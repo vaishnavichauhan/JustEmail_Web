@@ -53,7 +53,7 @@ export default function SignUpPage() {
 
   const strength = getStrengthBar();
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
@@ -73,7 +73,40 @@ export default function SignUpPage() {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      // 1. Call MySQL Signup API
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          password: password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.error || "Failed to create account in MySQL.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Also register in client auth store
+      registerAccountStore({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password: password,
+      });
+
+      setLoading(false);
+      setSuccessMsg("Account created in MySQL! Redirecting to Sign In...");
+      setTimeout(() => {
+        router.push("/login");
+      }, 1000);
+    } catch (err) {
+      // Fallback local registration if MySQL server is offline
       registerAccountStore({
         fullName: fullName.trim(),
         email: email.trim(),
@@ -84,7 +117,7 @@ export default function SignUpPage() {
       setTimeout(() => {
         router.push("/login");
       }, 1000);
-    }, 600);
+    }
   };
 
   return (

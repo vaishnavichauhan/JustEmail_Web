@@ -35,7 +35,7 @@ export default function LoginPage() {
   console.log("registeredUsers...", registeredUsers);
 
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
@@ -49,65 +49,64 @@ export default function LoginPage() {
       return;
     }
 
-    const emailLower = email.trim().toLowerCase();
-    const isAdminAccount = emailLower === "admin@justemails.in";
-    const isResellerAccount = emailLower.includes("reseller") || emailLower === "reseller@justemails.in";
-    console.log("registeredUsers......c", registeredUsers);
-
-    const existingUser = registeredUsers.find((u) => u.email.toLowerCase() === emailLower);
-
-    // Password Validation Checks
-    if (isAdminAccount) {
-      if (password !== "Admin@12345") {
-        setErrorMsg("Incorrect password for Super Admin account. (Hint: Admin@12345)");
-        return;
-      }
-    } else if (isResellerAccount) {
-      const validPass = existingUser?.password || "Reseller@12345";
-      if (password !== validPass) {
-        setErrorMsg("Incorrect password for Reseller account. (Hint: Reseller@12345)");
-        return;
-      }
-    } else if (existingUser) {
-      if (existingUser.password && existingUser.password !== password) {
-        setErrorMsg("Incorrect password for this account. Please try again.");
-        return;
-      }
-    } else {
-      setErrorMsg("No account found with this email ID. Please sign up first.");
-      return;
-    }
-
     setLoading(true);
 
-    setTimeout(() => {
-      const userRole = isAdminAccount ? "admin" : isResellerAccount ? "reseller" : existingUser?.role || "user";
-      const displayName = existingUser?.fullName || (isAdminAccount ? "Super Admin" : isResellerAccount ? "Reseller Partner" : email.split("@")[0]);
-
-      loginStore({
-        fullName: displayName,
-        email: email.trim(),
-        role: userRole,
+    try {
+      // 1. Send Login Request to MySQL API Route
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
       });
+
+      const data = await res.json();
+      console.log("data....", data);
+
+
+      if (!res.ok) {
+        setErrorMsg(data.error || "Login failed. Check your credentials.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Set Login Session & Token in Client Store
+      loginStore(data.user, data.token);
       setLoading(false);
 
-      if (isAdminAccount) {
+      if (data.user.role === "admin") {
         setSuccessMsg("Super Admin Authenticated! Redirecting to Control Panel...");
-        setTimeout(() => {
-          router.push("/admin");
-        }, 800);
-      } else if (isResellerAccount) {
+        setTimeout(() => router.push("/admin"), 800);
+      } else if (data.user.role === "reseller") {
         setSuccessMsg("Reseller Partner Authenticated! Redirecting to Reseller Portal...");
-        setTimeout(() => {
-          router.push("/reseller");
-        }, 800);
+        setTimeout(() => router.push("/reseller"), 800);
       } else {
         setSuccessMsg("Signed in successfully! Redirecting to main page...");
-        setTimeout(() => {
-          router.push("/");
-        }, 1000);
+        setTimeout(() => router.push("/"), 1000);
       }
-    }, 800);
+    } catch (err) {
+      // Fallback local check if server offline
+      const emailLower = email.trim().toLowerCase();
+      const isAdminAccount = emailLower === "admin@justemails.in";
+      const isResellerAccount = emailLower.includes("reseller") || emailLower === "reseller@justemails.in";
+      const existingUser = registeredUsers.find((u) => u.email.toLowerCase() === emailLower);
+
+      if (isAdminAccount && password === "Admin@12345") {
+        loginStore({ fullName: "Super Admin", email: emailLower, role: "admin" });
+        setSuccessMsg("Super Admin Authenticated! Redirecting to Control Panel...");
+        setTimeout(() => router.push("/admin"), 800);
+      } else if (isResellerAccount && (password === "Reseller@12345" || password === existingUser?.password)) {
+        loginStore({ fullName: "Reseller Partner", email: emailLower, role: "reseller" });
+        setSuccessMsg("Reseller Partner Authenticated! Redirecting to Reseller Portal...");
+        setTimeout(() => router.push("/reseller"), 800);
+      } else if (existingUser && existingUser.password === password) {
+        loginStore({ fullName: existingUser.fullName, email: existingUser.email, role: "user" });
+        setSuccessMsg("Signed in successfully! Redirecting to main page...");
+        setTimeout(() => router.push("/"), 1000);
+      } else {
+        setErrorMsg("Invalid credentials. Please check your email and password.");
+      }
+      setLoading(false);
+    }
   };
 
   return (

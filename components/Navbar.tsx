@@ -37,7 +37,12 @@ export default function Navbar({
   const { cartItems } = useCart();
   const { user, isAuthenticated, logout } = useAuthStore();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      // Ignore offline errors
+    }
     logout();
     setShowLogoutModal(true);
   };
