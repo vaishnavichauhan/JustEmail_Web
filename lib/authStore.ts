@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useCompareStore } from "./compareStore";
 
 export interface UserProfile {
   fullName: string;
@@ -35,13 +36,23 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       registeredUsers: [],
-      login: (userData: UserProfile, token?: string) =>
+      login: (userData: UserProfile, token?: string) => {
+        const currentEmail = get().user?.email?.toLowerCase();
+        const newEmail = userData.email?.toLowerCase();
+
+        // Clear compare plans when logging in as a different user or logging in from guest session
+        if (!currentEmail || currentEmail !== newEmail) {
+          useCompareStore.getState().clearComparePlans();
+        }
+
         set({
           user: userData,
           token: token || userData.token || null,
           isAuthenticated: true,
-        }),
-      signup: (account: RegisteredAccount) =>
+        });
+      },
+      signup: (account: RegisteredAccount) => {
+        useCompareStore.getState().clearComparePlans();
         set((state) => {
           const existing = state.registeredUsers.filter(
             (u) => u.email.toLowerCase() !== account.email.toLowerCase()
@@ -60,7 +71,8 @@ export const useAuthStore = create<AuthState>()(
               },
             ],
           };
-        }),
+        });
+      },
       registerAccount: (account: RegisteredAccount) =>
         set((state) => {
           const existing = state.registeredUsers.filter(
@@ -78,15 +90,21 @@ export const useAuthStore = create<AuthState>()(
             ],
           };
         }),
-      logout: () =>
+      logout: () => {
+        const wasLoggedIn = get().isAuthenticated || get().user !== null;
+        if (wasLoggedIn) {
+          useCompareStore.getState().clearComparePlans();
+        }
         set({
           user: null,
           token: null,
           isAuthenticated: false,
-        }),
+        });
+      },
     }),
     {
       name: "justemails-auth-storage",
     }
   )
 );
+
