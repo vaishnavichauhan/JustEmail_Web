@@ -293,19 +293,19 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <span className="text-slate-400 cursor-pointer hover:text-slate-300 transition-colors">
+                <Link href="/privacy-policy" className="hover:text-white transition-colors">
                   Privacy Policy
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-slate-400 cursor-pointer hover:text-slate-300 transition-colors">
+                <Link href="/terms-of-service" className="hover:text-white transition-colors">
                   Terms of Service
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-slate-400 cursor-pointer hover:text-slate-300 transition-colors">
+                <Link href="/acceptable-use-policy" className="hover:text-white transition-colors">
                   Acceptable Use Policy
-                </span>
+                </Link>
               </li>
             </ul>
           </div>
