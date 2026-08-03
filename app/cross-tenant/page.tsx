@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AuthModal from "@/components/AuthModal";
@@ -28,55 +28,23 @@ import {
   SlidersHorizontal,
   Server,
   Lock,
-  ShoppingCart
+  ShoppingCart,
+  AlertCircle,
+  Send
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-interface HybridProviderSelection {
-  googleSeats: number;
-  microsoftSeats: number;
-  zohoSeats: number;
-  titanSeats: number;
+interface DynamicSeatItem {
+  id: string;
+  name: string;
+  subtitle: string;
+  price: string;
+  priceNumeric: number;
+  logo: string;
+  logoType: string;
+  seats: number;
 }
-
-const supportedPlatforms = [
-  {
-    name: "Google Workspace",
-    role: "Gmail & Google Drive",
-    logo: "/images/google-workspace.png",
-    pricePerSeat: 136,
-    color: "border-blue-200 bg-blue-50/50"
-  },
-  {
-    name: "Microsoft 365",
-    role: "Exchange & Office Apps",
-    logo: "/images/microsoft-365.png",
-    pricePerSeat: 145,
-    color: "border-indigo-200 bg-indigo-50/50"
-  },
-  {
-    name: "Zoho Mail",
-    role: "NVMe Mailbox Storage",
-    logo: "/images/zoho-mail.png",
-    pricePerSeat: 58,
-    color: "border-emerald-200 bg-emerald-50/50"
-  },
-  {
-    name: "Titan Mail",
-    role: "Business Mail & Calendar",
-    logo: "/images/titan-mail.png",
-    pricePerSeat: 79,
-    color: "border-amber-200 bg-amber-50/50"
-  },
-  {
-    name: "Rediffmail Pro",
-    role: "Encrypted Indian Webmail",
-    logo: "/images/rediffmail.png",
-    pricePerSeat: 89,
-    color: "border-red-200 bg-red-50/50"
-  }
-];
 
 const crossTenantFaqs = [
   {
@@ -108,80 +76,107 @@ export default function CrossTenantPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   // Interactive Hybrid Configurator State
-  const [domainName, setDomainName] = useState("abc.com");
-  const [seats, setSeats] = useState<HybridProviderSelection>({
-    googleSeats: 2,
-    microsoftSeats: 3,
-    zohoSeats: 0,
-    titanSeats: 0
-  });
+  const [domainName, setDomainName] = useState("");
+  const [dynamicSeatItems, setDynamicSeatItems] = useState<DynamicSeatItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchCrossTenantProviders() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/providers");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data && Array.isArray(data.data)) {
+            const enabledList = data.data.filter((p: any) => p.enabled !== false);
+            const mapped: DynamicSeatItem[] = enabledList.map((p: any, idx: number) => {
+              const groupKey = (p.logoType || p.id).toLowerCase().trim();
+              const logoPath =
+                groupKey === "google"
+                  ? "/images/google-workspace.png"
+                  : groupKey === "microsoft"
+                  ? "/images/microsoft-365.png"
+                  : groupKey === "zoho"
+                  ? "/images/zoho-mail.png"
+                  : groupKey === "rediff"
+                  ? "/images/rediffmail.png"
+                  : groupKey === "titan"
+                  ? "/images/titan-mail.png"
+                  : "/images/logo1.svg";
+
+              const rawPrice = String(p.price || "0").replace(/[^0-9]/g, "");
+              const priceNum = parseInt(rawPrice, 10) || 100;
+
+              return {
+                id: p.id,
+                name: p.name,
+                subtitle: p.subtitle || p.name,
+                price: p.price,
+                priceNumeric: priceNum,
+                logo: logoPath,
+                logoType: groupKey,
+                seats: idx === 0 ? 2 : idx === 1 ? 3 : 0,
+              };
+            });
+            if (isMounted) {
+              setDynamicSeatItems(mapped);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load cross tenant providers:", e);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+    fetchCrossTenantProviders();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleOpenAuthModal = (mode: "login" | "signup") => {
     setAuthMode(mode);
     setAuthModalOpen(true);
   };
 
-  const handleSeatChange = (key: keyof HybridProviderSelection, delta: number) => {
-    setSeats((prev) => ({
-      ...prev,
-      [key]: Math.max(0, prev[key] + delta)
-    }));
+  const handleDynamicSeatChange = (id: string, delta: number) => {
+    setDynamicSeatItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, seats: Math.max(0, item.seats + delta) } : item
+      )
+    );
   };
 
-  const totalSeats = seats.googleSeats + seats.microsoftSeats + seats.zohoSeats + seats.titanSeats;
-  const monthlyCost = (seats.googleSeats * 136) + (seats.microsoftSeats * 145) + (seats.zohoSeats * 58) + (seats.titanSeats * 79);
+  const totalSeats = dynamicSeatItems.reduce((acc, item) => acc + item.seats, 0);
+  const monthlyCost = dynamicSeatItems.reduce((acc, item) => acc + item.seats * item.priceNumeric, 0);
   const annualCost = monthlyCost * 12;
 
   const handleAddHybridToCart = () => {
-    // Add selected items to cart
-    if (seats.googleSeats > 0) {
-      addToCart({
-        id: "google-starter",
-        providerId: "google-workspace",
-        providerName: "Google Workspace",
-        planName: "Business Starter",
-        price: "₹136",
-        amountNumeric: 136,
-        period: "/ user / month",
-        logo: "/images/google-workspace.png",
-        storage: "30 GB Cloud Storage",
-        sla: "99.9% SLA",
-        attachment: "25 MB",
-        features: ["Gmail @ " + (domainName || "abc.com"), "Google Meet"]
-      }, seats.googleSeats);
-    }
-    if (seats.microsoftSeats > 0) {
-      addToCart({
-        id: "ms-basic",
-        providerId: "microsoft-365",
-        providerName: "Microsoft 365",
-        planName: "Business Basic",
-        price: "₹145",
-        amountNumeric: 145,
-        period: "/ user / month",
-        logo: "/images/microsoft-365.png",
-        storage: "50 GB Mailbox",
-        sla: "99.9% SLA",
-        attachment: "150 MB",
-        features: ["Outlook @ " + (domainName || "abc.com"), "Microsoft Teams"]
-      }, seats.microsoftSeats);
-    }
-    if (seats.zohoSeats > 0) {
-      addToCart({
-        id: "zoho-lite",
-        providerId: "zoho-mail",
-        providerName: "Zoho Mail",
-        planName: "Mail Lite",
-        price: "₹58",
-        amountNumeric: 58,
-        period: "/ user / month",
-        logo: "/images/zoho-mail.png",
-        storage: "5 GB Storage",
-        sla: "99.9% SLA",
-        attachment: "25 MB",
-        features: ["Zoho Mail @ " + (domainName || "abc.com")]
-      }, seats.zohoSeats);
-    }
+    dynamicSeatItems.forEach((item) => {
+      if (item.seats > 0) {
+        addToCart(
+          {
+            id: item.id,
+            providerId: item.logoType,
+            providerName: item.name,
+            planName: item.subtitle,
+            price: item.price,
+            amountNumeric: item.priceNumeric,
+            period: "/ user / month",
+            logo: item.logo,
+            storage: "30 GB Cloud Storage",
+            sla: "99.9% SLA",
+            attachment: "25 MB",
+            features: [`${item.name} @ ${domainName || "abc.com"}`],
+          },
+          item.seats
+        );
+      }
+    });
   };
 
   return (
@@ -343,101 +338,90 @@ export default function CrossTenantPage() {
             </p>
           </div>
 
-          {/* Configurator Box */}
-          <div className="bg-[#F8FAFC] rounded-3xl p-6 sm:p-10 border border-gray-200 shadow-md max-w-5xl mx-auto">
-
-            {/* Domain Input Field */}
-            <div className="mb-8 p-4 rounded-2xl bg-white border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3 w-full">
-                <Globe className="w-5 h-5 text-blue-600 shrink-0" />
-                <div className="w-full">
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase">Your Domain Name</label>
-                  <input
-                    type="text"
-                    value={domainName}
-                    onChange={(e) => setDomainName(e.target.value)}
-                    placeholder="yourcompany.com"
-                    className="w-full text-sm font-extrabold text-gray-900 focus:outline-none bg-transparent"
-                  />
-                </div>
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 shrink-0 border border-blue-100">
-                Split-Domain Active
-              </span>
+          {/* Configurator Box, Loading, or Empty State */}
+          {loading ? (
+            <div className="p-12 text-center bg-[#F8FAFC] border border-gray-200 rounded-3xl shadow-sm space-y-3 max-w-xl mx-auto">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <div className="text-sm text-gray-600 font-bold">Loading cross-tenant plans...</div>
             </div>
+          ) : dynamicSeatItems.length === 0 ? (
+            <div className="p-12 text-center bg-[#F8FAFC] border border-gray-200 rounded-3xl shadow-sm space-y-3 max-w-xl mx-auto">
+              <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
+              <div className="text-xl text-gray-900 font-extrabold">Currently no plan available</div>
+              <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                No active provider plans are currently available for cross-tenant setup. Please contact admin to configure plans.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-[#F8FAFC] rounded-3xl p-6 sm:p-10 border border-gray-200 shadow-md max-w-5xl mx-auto">
 
-            {/* Provider Seat Selector Grid (Google & Microsoft Only) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 max-w-2xl mx-auto">
-
-              {/* Google Seat Selector */}
-              <div className="p-5 rounded-2xl bg-white border border-gray-200 text-center space-y-3">
-                <Image src="/images/google-workspace.png" alt="Google" width={36} height={36} className="mx-auto max-h-7 w-auto object-contain" />
-                <div className="text-xs font-extrabold text-gray-900">Google Workspace</div>
-                <div className="text-xs font-bold text-blue-600">₹136 / seat / mo</div>
-
-                <div className="flex items-center justify-center gap-3 pt-2">
-                  <button
-                    onClick={() => handleSeatChange("googleSeats", -1)}
-                    className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 font-bold hover:bg-gray-200"
-                  >
-                    -
-                  </button>
-                  <span className="text-sm font-extrabold text-gray-900 w-6">{seats.googleSeats}</span>
-                  <button
-                    onClick={() => handleSeatChange("googleSeats", 1)}
-                    className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 font-bold hover:bg-gray-200"
-                  >
-                    +
-                  </button>
+              {/* Domain Input Field */}
+              <div className="mb-8 p-4 rounded-2xl bg-white border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full">
+                  <Globe className="w-5 h-5 text-blue-600 shrink-0" />
+                  <div className="w-full">
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-1">Enter Your Domain Name</label>
+                    <input
+                      type="text"
+                      value={domainName}
+                      onChange={(e) => setDomainName(e.target.value)}
+                      placeholder="Enter your domain"
+                      className="w-full text-sm font-extrabold text-gray-900 bg-[#F8FAFC] border border-gray-300 focus:border-blue-600 focus:bg-white rounded-xl px-3.5 py-2.5 outline-none transition-all cursor-text shadow-2xs"
+                    />
+                  </div>
                 </div>
-                <div className="text-[10px] text-gray-500">Gmail @ {domainName || "domain"}</div>
+                <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 shrink-0 border border-blue-100">
+                  Split-Domain Active
+                </span>
               </div>
 
-              {/* Microsoft Seat Selector */}
-              <div className="p-5 rounded-2xl bg-white border border-gray-200 text-center space-y-3">
-                <Image src="/images/microsoft-365.png" alt="Microsoft" width={36} height={36} className="mx-auto max-h-7 w-auto object-contain" />
-                <div className="text-xs font-extrabold text-gray-900">Microsoft 365</div>
-                <div className="text-xs font-bold text-blue-600">₹145 / seat / mo</div>
+              {/* Dynamic Provider Seat Selector Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
+                {dynamicSeatItems.map((item) => (
+                  <div key={item.id} className="p-5 rounded-2xl bg-white border border-gray-200 text-center space-y-3 shadow-xs">
+                    <Image src={item.logo} alt={item.name} width={36} height={36} className="mx-auto max-h-7 w-auto object-contain" />
+                    <div className="text-xs font-extrabold text-gray-900">{item.name}</div>
+                    <div className="text-xs font-bold text-blue-600">{item.price} / seat / mo</div>
 
-                <div className="flex items-center justify-center gap-3 pt-2">
-                  <button
-                    onClick={() => handleSeatChange("microsoftSeats", -1)}
-                    className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 font-bold hover:bg-gray-200"
-                  >
-                    -
-                  </button>
-                  <span className="text-sm font-extrabold text-gray-900 w-6">{seats.microsoftSeats}</span>
-                  <button
-                    onClick={() => handleSeatChange("microsoftSeats", 1)}
-                    className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 font-bold hover:bg-gray-200"
-                  >
-                    +
-                  </button>
+                    <div className="flex items-center justify-center gap-3 pt-2">
+                      <button
+                        onClick={() => handleDynamicSeatChange(item.id, -1)}
+                        className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 font-bold hover:bg-gray-200 active:scale-95"
+                      >
+                        -
+                      </button>
+                      <span className="text-sm font-extrabold text-gray-900 w-6">{item.seats}</span>
+                      <button
+                        onClick={() => handleDynamicSeatChange(item.id, 1)}
+                        className="w-8 h-8 rounded-lg bg-gray-100 text-gray-800 font-bold hover:bg-gray-200 active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="text-[10px] text-gray-500 font-medium">{item.subtitle} @ {domainName || "domain"}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Combined Total Summary Bar */}
+              <div className="p-6 rounded-2xl bg-[#0B1437] text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg">
+                <div>
+                  <div className="text-xs text-blue-300 font-bold uppercase">Combined Hybrid Setup ({totalSeats} Total Seats)</div>
+                  <div className="text-2xl font-extrabold mt-1">₹{annualCost.toLocaleString("en-IN")} <span className="text-xs text-slate-300 font-normal">/ year</span></div>
+                  <div className="text-[11px] text-slate-400">Includes 0-downtime MX Smart Routing setup</div>
                 </div>
-                <div className="text-[10px] text-gray-500">Outlook @ {domainName || "domain"}</div>
+
+                <Link
+                  href={`/enquiryForm?domain=${encodeURIComponent(domainName.trim())}&provider=${encodeURIComponent(`Cross-Tenant Split Domain (${totalSeats} Seats)`)}&plan=${encodeURIComponent(`Hybrid Multi-Provider Setup (₹${monthlyCost}/mo)`)}`}
+                  className="w-full sm:w-auto px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0"
+                >
+                  <Send className="w-4 h-4 text-blue-200" />
+                  <span>Deploy Split Domain Mailboxes</span>
+                </Link>
               </div>
 
             </div>
-
-            {/* Combined Total Summary Bar */}
-            <div className="p-6 rounded-2xl bg-[#0B1437] text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg">
-              <div>
-                <div className="text-xs text-blue-300 font-bold uppercase">Combined Hybrid Setup ({totalSeats} Total Seats)</div>
-                <div className="text-2xl font-extrabold mt-1">₹{annualCost.toLocaleString("en-IN")} <span className="text-xs text-slate-300 font-normal">/ year</span></div>
-                <div className="text-[11px] text-slate-400">Includes 0-downtime MX Smart Routing setup</div>
-              </div>
-
-              <Link
-                href="/checkout"
-                onClick={handleAddHybridToCart}
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                <span>Deploy Split Domain Mailboxes</span>
-              </Link>
-            </div>
-
-          </div>
+          )}
 
         </div>
       </section>
@@ -521,26 +505,41 @@ export default function CrossTenantPage() {
               Mix & Match Official Email Platforms
             </h2>
             <p className="text-gray-600 text-sm sm:text-base">
-              Combine any of the following 5 official cloud email providers under your domain.
+              Combine official cloud email providers under your domain.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
-            {supportedPlatforms.map((p) => (
-              <div
-                key={p.name}
-                className={`p-6 rounded-2xl border ${p.color} text-center flex flex-col items-center justify-center gap-3 shadow-xs hover:shadow-md transition-all`}
-              >
-                <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0">
-                  <Image src={p.logo} alt={p.name} width={36} height={36} className="object-contain max-h-8 w-auto" />
+          {loading ? (
+            <div className="p-12 text-center bg-[#F8FAFC] border border-gray-200 rounded-3xl shadow-sm space-y-3 max-w-xl mx-auto">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <div className="text-sm text-gray-600 font-bold">Loading supported platforms...</div>
+            </div>
+          ) : dynamicSeatItems.length === 0 ? (
+            <div className="p-12 text-center bg-[#F8FAFC] border border-gray-200 rounded-3xl shadow-sm space-y-3 max-w-xl mx-auto">
+              <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
+              <div className="text-xl text-gray-900 font-extrabold">Currently no plan available</div>
+              <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                No active platforms are configured in the system.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+              {dynamicSeatItems.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-6 rounded-2xl border border-blue-100 bg-blue-50/30 text-center flex flex-col items-center justify-center gap-3 shadow-xs hover:shadow-md transition-all"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0">
+                    <Image src={p.logo} alt={p.name} width={36} height={36} className="object-contain max-h-8 w-auto" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-extrabold text-gray-900">{p.name}</div>
+                    <div className="text-[11px] font-bold text-blue-600 mt-0.5">{p.price} / mo</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs font-extrabold text-gray-900">{p.name}</div>
-                  <div className="text-[11px] font-bold text-blue-600 mt-0.5">₹{p.pricePerSeat} / mo</div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
         </div>
       </section>
@@ -660,12 +659,12 @@ export default function CrossTenantPage() {
             <h3 className="text-2xl font-extrabold">Deploy Split-Domain Mailboxes for Your Domain Today</h3>
             <p className="text-xs sm:text-sm text-slate-300 mt-1">Mix Google Workspace + Microsoft 365 under your single domain.</p>
           </div>
-          <button
-            onClick={() => handleOpenAuthModal("signup")}
-            className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg transition-all shrink-0 active:scale-95"
+          <Link
+            href={`/enquiryForm?domain=${encodeURIComponent(domainName.trim())}&provider=${encodeURIComponent("Cross-Tenant Split Domain")}&plan=${encodeURIComponent("Hybrid Setup")}`}
+            className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg transition-all shrink-0 active:scale-95 text-center inline-block"
           >
             Get Cross-Tenant Setup
-          </button>
+          </Link>
         </div>
       </section>
 

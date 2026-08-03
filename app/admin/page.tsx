@@ -299,14 +299,14 @@ export default function AdminPage() {
     setProviderFormData({
       id: "",
       name: "Google Workspace",
-      subtitle: "",
+      subtitle: "Base Plan",
       badge: "",
       price: "",
       period: "/ user / month",
       billingNote: "",
       storage: "",
       uptime: "99.9% SLA",
-      recommendedUsers: "",
+      recommendedUsers: "1 - 300 Users",
       logoType: "google",
       featuresText: "",
     });
@@ -316,7 +316,7 @@ export default function AdminPage() {
   const handleOpenEditProviderModal = (p: any) => {
     setEditingProviderId(p.id);
     setNewFeatureInput("");
-    const numericPriceOnly = p.price ? String(p.price).replace(/[^\d]/g, "") : "136";
+    const numericPriceOnly = p.price ? String(p.price).replace(/[^\d.]/g, "") : "136";
     const numericStorageOnly = p.storage ? String(p.storage).replace(/[^\d]/g, "") : "30";
 
     setProviderFormData({
@@ -329,7 +329,7 @@ export default function AdminPage() {
       billingNote: p.billingNote || "Billed annually",
       storage: numericStorageOnly,
       uptime: p.uptime || "99.9% SLA",
-      recommendedUsers: p.recommendedUsers || "5 - 500 Users",
+      recommendedUsers: p.recommendedUsers || "1 - 300 Users",
       logoType: p.logoType || "google",
       featuresText: Array.isArray(p.features) ? p.features.join("\n") : typeof p.features === "string" ? p.features : "",
     });
@@ -343,9 +343,9 @@ export default function AdminPage() {
       return;
     }
 
-    const rawNumericPrice = providerFormData.price.replace(/[^\d]/g, "");
-    if (!rawNumericPrice) {
-      triggerAlert("Please enter a valid numeric price.");
+    const rawNumericPrice = providerFormData.price.replace(/[^\d.]/g, "");
+    if (!rawNumericPrice || isNaN(parseFloat(rawNumericPrice))) {
+      triggerAlert("Please enter a valid numeric price (e.g. 100).");
       return;
     }
 
@@ -369,7 +369,7 @@ export default function AdminPage() {
       billingNote: providerFormData.billingNote,
       storage: formattedStorage,
       uptime: providerFormData.uptime,
-      recommendedUsers: providerFormData.recommendedUsers,
+      recommendedUsers: providerFormData.recommendedUsers || "1 - 300 Users",
       logoType: providerFormData.logoType,
       features: featuresArray,
       enabled: true,
@@ -653,7 +653,7 @@ export default function AdminPage() {
             <div className="text-center mb-8">
               <Link href="/" className="inline-block bg-white px-5 py-2.5 rounded-2xl shadow-xl hover:scale-105 transition-transform border border-gray-200">
                 <Image
-                  src="/images/justemail-logo.png"
+                  src="/images/logo1.svg"
                   alt="Justemail Logo"
                   width={160}
                   height={45}
@@ -732,7 +732,7 @@ export default function AdminPage() {
               <div className="px-2 py-1">
                 <Link href="/" className="inline-block bg-white px-3.5 py-1.5 rounded-xl shadow-md">
                   <Image
-                    src="/images/justemail-logo.png"
+                    src="/images/logo1.svg"
                     alt="Justemail Logo"
                     width={130}
                     height={35}
@@ -1509,6 +1509,21 @@ export default function AdminPage() {
                     <div className="p-12 text-center text-xs font-bold text-gray-500 flex items-center justify-center gap-2">
                       <RotateCw className="w-4 h-4 animate-spin text-blue-600" />
                       <span>Loading Email Providers...</span>
+                    </div>
+                  ) : adminProvidersList.length === 0 ? (
+                    <div className="p-12 text-center bg-white border border-gray-200 rounded-3xl shadow-sm space-y-4 max-w-xl mx-auto my-6">
+                      <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
+                      <div className="text-xl text-gray-900 font-extrabold">Please create plan</div>
+                      <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                        No provider plans exist in the system yet. Click the button below to add and configure your first email plan.
+                      </p>
+                      <button
+                        onClick={handleOpenAddProviderModal}
+                        className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md inline-flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Create First Plan</span>
+                      </button>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2871,18 +2886,24 @@ export default function AdminPage() {
                   </select>
                 </div>
 
-                {/* 2. Subtitle */}
+                {/* 2. Subtitle Plan Dropdown */}
                 <div>
                   <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
-                    Subtitle Plan
+                    Subtitle Plan <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={providerFormData.subtitle}
                     onChange={(e) => setProviderFormData({ ...providerFormData, subtitle: e.target.value })}
-                    placeholder="e.g. Business Starter"
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600"
-                  />
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 cursor-pointer"
+                  >
+                    <option value="Base Plan">Base Plan</option>
+                    <option value="Starter Plan">Starter Plan</option>
+                    <option value="Standard Plan">Standard Plan</option>
+                    {providerFormData.subtitle &&
+                      !["Base Plan", "Starter Plan", "Standard Plan"].includes(providerFormData.subtitle) && (
+                        <option value={providerFormData.subtitle}>{providerFormData.subtitle}</option>
+                      )}
+                  </select>
                 </div>
 
                 {/* 3. Badge Tag */}
@@ -2911,13 +2932,13 @@ export default function AdminPage() {
                     <input
                       type="text"
                       required
-                      inputMode="numeric"
+                      inputMode="decimal"
                       value={providerFormData.price}
                       onChange={(e) => {
-                        const numericOnly = e.target.value.replace(/[^\d]/g, "");
-                        setProviderFormData({ ...providerFormData, price: numericOnly });
+                        const decimalOnly = e.target.value.replace(/[^\d.]/g, "").replace(/(\..*?)\..*/g, "$1");
+                        setProviderFormData({ ...providerFormData, price: decimalOnly });
                       }}
-                      placeholder="136"
+                      placeholder="100"
                       className="w-full px-4 py-3 rounded-r-xl bg-gray-50 border border-gray-200 text-xs font-extrabold text-gray-900 focus:outline-none focus:border-blue-600"
                     />
                   </div>
@@ -2988,7 +3009,7 @@ export default function AdminPage() {
                     type="text"
                     value={providerFormData.recommendedUsers}
                     onChange={(e) => setProviderFormData({ ...providerFormData, recommendedUsers: e.target.value })}
-                    placeholder="e.g. 5 - 500 Users"
+                    placeholder="e.g. 1 - 300 Users"
                     className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600"
                   />
                 </div>

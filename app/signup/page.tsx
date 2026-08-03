@@ -137,7 +137,7 @@ export default function SignUpPage() {
           <div className="relative z-10 space-y-6">
             <Link href="/" className="inline-block bg-white px-4 py-2 rounded-xl shadow-md hover:scale-105 transition-transform">
               <Image
-                src="/images/justemail-logo.png"
+                src="/images/logo1.svg"
                 alt="Justemail Logo"
                 width={140}
                 height={40}

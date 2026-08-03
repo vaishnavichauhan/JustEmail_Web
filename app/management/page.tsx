@@ -5,25 +5,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/Footer";
-import { 
-  Settings, 
-  ShieldCheck, 
-  Users, 
-  CheckCircle2, 
-  ChevronRight, 
-  ChevronDown, 
-  HelpCircle, 
-  ArrowRight, 
-  Headphones, 
-  Lock, 
-  Sparkles, 
-  Check, 
-  Clock, 
-  Key, 
-  Mail, 
-  Sliders, 
-  ShieldAlert, 
-  Smartphone, 
+import {
+  Settings,
+  ShieldCheck,
+  Users,
+  CheckCircle2,
+  ChevronRight,
+  ChevronDown,
+  HelpCircle,
+  ArrowRight,
+  Headphones,
+  Lock,
+  Sparkles,
+  Check,
+  Clock,
+  Key,
+  Mail,
+  Sliders,
+  ShieldAlert,
+  Smartphone,
   Monitor,
   Zap,
   Server
@@ -139,7 +139,7 @@ export default function ManagementServicesPage() {
       {/* --- 1. PAGE HEADER & BREADCRUMBS --- */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-gradient-to-b from-slate-900 via-[#0B1437] to-slate-900 text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          
+
           {/* Breadcrumbs: Home > Management Services */}
           <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 mb-6">
             <Link href="/" className="hover:text-white transition-colors">
@@ -154,18 +154,18 @@ export default function ManagementServicesPage() {
               <Settings className="w-4 h-4 text-blue-400" />
               <span>Certified Email Administration & Support</span>
             </div>
-            
+
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
               Fully Managed Email Infrastructure & Administration
             </h1>
-            
+
             <p className="text-base sm:text-lg text-slate-300 font-normal leading-relaxed mb-8">
               End-to-end email administration, automated MX/SPF/DKIM setup, Google & Microsoft Admin Portal configuration, security policy enforcement, and 24/7 technical support.
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
               <button
-                onClick={() => handleOpenAuthModal("signup")}
+                // onClick={() => handleOpenAuthModal("signup")}
                 className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 active:scale-95"
               >
                 <span>Get Managed Services</span>
@@ -188,7 +188,7 @@ export default function ManagementServicesPage() {
       {/* --- 2. CORE SERVICE OFFERINGS (SECTION-WISE DISPLAY - NO CARDS) --- */}
       <section id="core-offerings-section" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
-          
+
           <div className="text-center max-w-3xl mx-auto">
             <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
               Core Service Offerings
@@ -211,7 +211,7 @@ export default function ManagementServicesPage() {
                   className="p-8 sm:p-12 rounded-3xl bg-[#F8FAFC] border border-gray-200/90 shadow-sm relative overflow-hidden transition-all hover:border-gray-300"
                 >
                   <div className="flex flex-col lg:flex-row items-start justify-between gap-10">
-                    
+
                     {/* Left Details Block */}
                     <div className="flex-1 space-y-4">
                       <div className="flex items-center gap-3">
@@ -238,7 +238,7 @@ export default function ManagementServicesPage() {
 
                       <div className="pt-4">
                         <button
-                          onClick={() => handleOpenAuthModal("signup")}
+                          // onClick={() => handleOpenAuthModal("signup")}
                           className="px-6 py-3.5 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all active:scale-95"
                         >
                           <span>Request {service.title.split(". ")[1]}</span>
@@ -305,7 +305,7 @@ export default function ManagementServicesPage() {
       {/* --- 3. MANAGEMENT SERVICES FAQS SECTION --- */}
       <section className="py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-800 text-xs font-extrabold uppercase tracking-wider mb-3 border border-blue-100">
               <HelpCircle className="w-3.5 h-3.5" />
@@ -325,9 +325,8 @@ export default function ManagementServicesPage() {
               return (
                 <div
                   key={idx}
-                  className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
-                    isOpen ? "bg-slate-50/80 border-blue-200 shadow-xs" : "bg-white border-gray-200 hover:border-gray-300"
-                  }`}
+                  className={`rounded-2xl border transition-all duration-300 overflow-hidden ${isOpen ? "bg-slate-50/80 border-blue-200 shadow-xs" : "bg-white border-gray-200 hover:border-gray-300"
+                    }`}
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
@@ -336,9 +335,8 @@ export default function ManagementServicesPage() {
                     <span className="text-sm sm:text-base font-extrabold text-gray-900 leading-snug">
                       {faq.question}
                     </span>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                      isOpen ? "bg-blue-600 text-white rotate-180" : "bg-gray-100 text-gray-600"
-                    }`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 ${isOpen ? "bg-blue-600 text-white rotate-180" : "bg-gray-100 text-gray-600"
+                      }`}>
                       <ChevronDown className="w-4 h-4" />
                     </div>
                   </button>
@@ -373,7 +371,7 @@ export default function ManagementServicesPage() {
             <p className="text-xs sm:text-sm text-slate-300 mt-1">Guaranteed &lt;15 minute response SLA, 24/7 WhatsApp & phone support.</p>
           </div>
           <button
-            onClick={() => handleOpenAuthModal("signup")}
+            // onClick={() => handleOpenAuthModal("signup")}
             className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg transition-all shrink-0 active:scale-95"
           >
             Get Started with Managed Services

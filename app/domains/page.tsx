@@ -5,21 +5,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/Footer";
-import { 
-  Globe, 
-  Search, 
-  ShieldCheck, 
-  Zap, 
-  Lock, 
-  Share2, 
-  CheckCircle2, 
-  ChevronRight, 
-  ChevronDown, 
-  HelpCircle, 
-  ArrowRight, 
-  Building2, 
-  Sparkles, 
-  Check, 
+import {
+  Globe,
+  Search,
+  ShieldCheck,
+  Zap,
+  Lock,
+  Share2,
+  CheckCircle2,
+  ChevronRight,
+  ChevronDown,
+  HelpCircle,
+  ArrowRight,
+  Building2,
+  Sparkles,
+  Check,
   X,
   Layers,
   Tag
@@ -129,7 +129,7 @@ export default function DomainPage() {
 
     const cleanedName = searchQuery.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split(".")[0];
     const fullDomain = `${cleanedName}${selectedExtension}`;
-    
+
     // Price lookup based on extension
     const priceMap: Record<string, string> = {
       ".com": "₹899 / year",
@@ -157,7 +157,7 @@ export default function DomainPage() {
       {/* --- 1. PAGE HEADER & BREADCRUMBS --- */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-gradient-to-b from-slate-900 via-[#0B1437] to-slate-900 text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          
+
           {/* Breadcrumbs: Home > Domains (Left Side Only) */}
           <div className="text-left mb-6">
             <nav className="inline-flex items-center gap-2 text-xs font-bold text-slate-400">
@@ -171,7 +171,7 @@ export default function DomainPage() {
 
           {/* Centered Hero Section Content */}
           <div className="max-w-3xl mx-auto text-center flex flex-col items-center justify-center">
-            
+
             {/* DYNAMIC MOVING DOMAIN ICON ANIMATION */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -186,7 +186,7 @@ export default function DomainPage() {
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 className="w-20 h-20 rounded-full border-2 border-dashed border-blue-400/40 flex items-center justify-center"
               />
-              
+
               {/* Center 3D Globe Badge */}
               <div className="absolute w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-xl shadow-blue-500/30">
                 <Globe className="w-8 h-8" />
@@ -222,11 +222,11 @@ export default function DomainPage() {
               <Globe className="w-4 h-4 text-blue-400" />
               <span>Automated Business Domain Registration</span>
             </div>
-            
+
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
               Find & Secure Your Perfect Business Domain Name
             </h1>
-            
+
             <p className="text-base sm:text-lg text-slate-300 font-normal leading-relaxed mb-8 max-w-2xl">
               Register global TLDs with automated DNS configuration, WHOIS Privacy Guard included for free, and 1-click email mailbox mapping.
             </p>
@@ -313,7 +313,7 @@ export default function DomainPage() {
       {/* --- 3. WHY CHOOSE JUSTEMAIL FOR DOMAINS SECTION --- */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
               Domain Advantages
@@ -327,7 +327,7 @@ export default function DomainPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
+
             {/* Advantage 1: Instant Activation & Automated DNS */}
             <div className="p-8 rounded-3xl bg-[#F8FAFC] border border-gray-200 hover:border-blue-300 transition-all shadow-sm flex flex-col justify-between">
               <div>
@@ -411,7 +411,7 @@ export default function DomainPage() {
       {/* --- 4. DOMAIN TLDS, TIERS & PRICING DETAILS SECTION --- */}
       <section className="py-20 bg-[#F8FAFC] border-t border-gray-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
               Transparent Pricing
@@ -469,7 +469,7 @@ export default function DomainPage() {
 
                 <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                   <button
-                    onClick={() => handleOpenAuthModal("signup")}
+                    // onClick={() => handleOpenAuthModal("signup")}
                     className="w-full py-3.5 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs shadow-sm transition-all"
                   >
                     <span>Register Domain Tier</span>
@@ -485,7 +485,7 @@ export default function DomainPage() {
       {/* --- 5. DOMAIN CLIENTS & PORTFOLIO SECTION --- */}
       <section className="py-20 bg-white border-t border-gray-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
               Trusted Brand Portfolio
@@ -526,7 +526,7 @@ export default function DomainPage() {
       {/* --- 6. DOMAIN FAQS SECTION --- */}
       <section className="py-20 bg-[#F8FAFC] border-t border-gray-200/80">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-800 text-xs font-extrabold uppercase tracking-wider mb-3 border border-blue-100">
               <HelpCircle className="w-3.5 h-3.5" />
@@ -546,9 +546,8 @@ export default function DomainPage() {
               return (
                 <div
                   key={idx}
-                  className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
-                    isOpen ? "bg-white border-blue-200 shadow-sm" : "bg-white border-gray-200 hover:border-gray-300"
-                  }`}
+                  className={`rounded-2xl border transition-all duration-300 overflow-hidden ${isOpen ? "bg-white border-blue-200 shadow-sm" : "bg-white border-gray-200 hover:border-gray-300"
+                    }`}
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
@@ -557,9 +556,8 @@ export default function DomainPage() {
                     <span className="text-sm sm:text-base font-extrabold text-gray-900 leading-snug">
                       {faq.question}
                     </span>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                      isOpen ? "bg-blue-600 text-white rotate-180" : "bg-gray-100 text-gray-600"
-                    }`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 ${isOpen ? "bg-blue-600 text-white rotate-180" : "bg-gray-100 text-gray-600"
+                      }`}>
                       <ChevronDown className="w-4 h-4" />
                     </div>
                   </button>

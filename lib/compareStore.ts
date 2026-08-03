@@ -8,6 +8,7 @@ export interface PlanItem {
   providerId: string;
   providerName: string;
   planName: string;
+  subtitle?: string;
   price: string;
   period: string;
   logo: string;

@@ -41,9 +41,17 @@ function EnquiryFormContent() {
 
     const basePricePerMonth = extractPriceDigits(planParam);
 
+    const domainParam = searchParams.get("domain") || "";
+
     // Form State
     const [organizationName, setOrganizationName] = useState("");
-    const [domain, setDomain] = useState("");
+    const [domain, setDomain] = useState(domainParam);
+
+    useEffect(() => {
+        if (domainParam) {
+            setDomain(domainParam);
+        }
+    }, [domainParam]);
     const [city, setCity] = useState("");
     const [state, setState] = useState("");
     const [zip, setZip] = useState("");

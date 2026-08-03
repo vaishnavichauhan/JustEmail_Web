@@ -186,7 +186,7 @@ export default function ResellerPage() {
             <div className="text-center mb-8">
               <Link href="/" className="inline-block bg-white px-5 py-2.5 rounded-2xl shadow-xl hover:scale-105 transition-transform border border-gray-200">
                 <Image
-                  src="/images/justemail-logo.png"
+                  src="/images/logo1.svg"
                   alt="Justemail Logo"
                   width={160}
                   height={45}
@@ -264,7 +264,7 @@ export default function ResellerPage() {
               <div className="px-2 py-1">
                 <Link href="/" className="inline-block bg-white px-3.5 py-1.5 rounded-xl shadow-md">
                   <Image
-                    src="/images/justemail-logo.png"
+                    src="/images/logo1.svg"
                     alt="Justemail Logo"
                     width={130}
                     height={35}

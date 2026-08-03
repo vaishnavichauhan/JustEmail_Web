@@ -193,7 +193,7 @@ export default function Hero({
                 key={partner.name}
                 whileHover={{ y: -4, scale: 1.02 }}
                 transition={{ duration: 0.2 }}
-                className="glass-card bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:shadow-lg flex flex-col items-center justify-center gap-3 group cursor-pointer"
+                className="glass-card bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:shadow-lg flex flex-col items-center justify-center gap-3 group"
               >
                 <div className="w-12 h-12 relative flex items-center justify-center">
                   <Image
