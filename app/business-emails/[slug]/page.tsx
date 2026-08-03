@@ -330,7 +330,7 @@ export default function SingleProviderPage({
               storage: p.storage,
               sla: p.uptime,
               attachment: "30 MB",
-              description: `${p.name} ${p.subtitle || ""} with ${p.storage} and ${p.uptime}.`,
+              description: `${p.name} ${p.subtitle || ""} with ${p.storage}`,
               features: Array.isArray(p.features) ? p.features : [],
             }));
 
@@ -434,10 +434,6 @@ export default function SingleProviderPage({
 
             {/* Centered Metric Chips Bar */}
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 pt-8 border-t border-slate-800/80 w-full max-w-3xl mx-auto">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-xs font-bold text-white">{provider.sla}</span>
-              </div>
               <div className="flex items-center gap-2">
                 <HardDrive className="w-4 h-4 text-blue-400 shrink-0" />
                 <span className="text-xs font-bold text-white">{provider.maxStorage}</span>
@@ -571,7 +567,7 @@ export default function SingleProviderPage({
 
                       <div className="flex items-center gap-2">
                         <Link
-                          href={`/enquiryForm?plan=${plan.id}&provider=${plan.providerId}`}
+                          href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName || provider.name)}&plan=${encodeURIComponent(`${plan.planName} (${plan.price})`)}&providerId=${encodeURIComponent(plan.id)}`}
                           className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-300 border ${isFeatured
                             ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/40 hover:text-white"
                             : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"

@@ -90,24 +90,19 @@ export default function CrossTenantPage() {
           const data = await res.json();
           if (data.data && Array.isArray(data.data)) {
             const enabledList = data.data.filter((p: any) => p.enabled !== false);
-            const mapped: DynamicSeatItem[] = enabledList.map((p: any, idx: number) => {
+            // Keep only Google Workspace and Microsoft 365 providers
+            const filteredList = enabledList.filter((p: any) => {
+              const key = (p.logoType || p.id).toLowerCase().trim();
+              return key === "google" || key === "microsoft";
+            });
+            const mapped: DynamicSeatItem[] = filteredList.map((p: any, idx: number) => {
               const groupKey = (p.logoType || p.id).toLowerCase().trim();
               const logoPath =
                 groupKey === "google"
                   ? "/images/google-workspace.png"
-                  : groupKey === "microsoft"
-                  ? "/images/microsoft-365.png"
-                  : groupKey === "zoho"
-                  ? "/images/zoho-mail.png"
-                  : groupKey === "rediff"
-                  ? "/images/rediffmail.png"
-                  : groupKey === "titan"
-                  ? "/images/titan-mail.png"
-                  : "/images/logo1.svg";
-
+                  : "/images/microsoft-365.png";
               const rawPrice = String(p.price || "0").replace(/[^0-9]/g, "");
               const priceNum = parseInt(rawPrice, 10) || 100;
-
               return {
                 id: p.id,
                 name: p.name,

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
-  Lock,
+  ReceiptText,
   Mail,
   User,
   Eye,
@@ -152,12 +152,44 @@ export default function AdminPage() {
   const router = useRouter();
   const authLogout = useAuthStore((state) => state.logout);
 
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(true);
-  const [adminId, setAdminId] = useState(MANUAL_ADMIN_ID);
-  const [adminPass, setAdminPass] = useState(MANUAL_ADMIN_PASS);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [adminId, setAdminId] = useState("");
+  const [adminPass, setAdminPass] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function checkAdminAuth() {
+      try {
+        setCheckingAuth(true);
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user && (data.user.role === "admin" || data.user.email === "admin@justemails.in")) {
+            if (isMounted) {
+              setIsAdminLoggedIn(true);
+              useAuthStore.getState().login(data.user);
+            }
+          } else {
+            if (isMounted) setIsAdminLoggedIn(false);
+          }
+        } else {
+          if (isMounted) setIsAdminLoggedIn(false);
+        }
+      } catch (err) {
+        if (isMounted) setIsAdminLoggedIn(false);
+      } finally {
+        if (isMounted) setCheckingAuth(false);
+      }
+    }
+    checkAdminAuth();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   interface ResellerAdminRecord {
     id: string;
@@ -224,6 +256,31 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteEnquiry = async (id: any) => {
+    if (!id) return;
+    if (!confirm("Are you sure you want to delete this enquiry record?")) return;
+
+    try {
+      const res = await fetch(`/api/enquiry?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setEnquiriesList((prev) => prev.filter((e) => String(e.id) !== String(id) && String(e.enquiry_id) !== String(id)));
+        if (selectedEnquiryModal && (String(selectedEnquiryModal.id) === String(id) || String(selectedEnquiryModal.enquiry_id) === String(id))) {
+          setSelectedEnquiryModal(null);
+        }
+        triggerAlert("Enquiry deleted successfully!");
+      } else {
+        const data = await res.json();
+        triggerAlert(data.error || "Failed to delete enquiry.");
+      }
+    } catch (err) {
+      console.error("Delete enquiry error:", err);
+      triggerAlert("Error occurred while deleting enquiry.");
+    }
+  };
+
   // Provider Management State & Functions
   const [adminProvidersList, setAdminProvidersList] = useState<any[]>([]);
   const [loadingProviders, setLoadingProviders] = useState<boolean>(false);
@@ -251,6 +308,8 @@ export default function AdminPage() {
       const res = await fetch("/api/providers");
       if (res.ok) {
         const data = await res.json();
+        console.log("Providerdata", data);
+
         if (data.data) {
           setAdminProvidersList(data.data);
         }
@@ -619,32 +678,74 @@ export default function AdminPage() {
     paymentGateway: "Razorpay / UPI Live Enabled",
   });
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    if (adminId.trim() !== MANUAL_ADMIN_ID || adminPass !== MANUAL_ADMIN_PASS) {
-      setErrorMsg("Invalid Admin ID or Password. Use preset credentials.");
+    if (adminId.trim().toLowerCase() !== MANUAL_ADMIN_ID.toLowerCase() || adminPass !== MANUAL_ADMIN_PASS) {
+      setErrorMsg("Invalid Admin ID or Password.");
       return;
     }
 
     setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: adminId.trim(), password: adminPass }),
+      });
 
-    setTimeout(() => {
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          useAuthStore.getState().login(data.user);
+        }
+        setIsAdminLoggedIn(true);
+      } else {
+        const err = await res.json();
+        setErrorMsg(err.error || err.message || "Invalid credentials.");
+      }
+    } catch (err) {
+      console.error("Admin login error:", err);
+      setErrorMsg("Failed to authenticate with server.");
+    } finally {
       setLoading(false);
-      setIsAdminLoggedIn(true);
-    }, 600);
+    }
   };
 
-  const handleAdminLogout = () => {
+  const handleAdminLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
     authLogout();
     setIsAdminLoggedIn(false);
-    router.push("/");
+    router.push("/login");
   };
 
   return (
     <main className="min-h-screen bg-[#F8FAFC] text-gray-900 selection:bg-blue-600 selection:text-white font-sans flex">
-      {!isAdminLoggedIn ? (
+      {checkingAuth ? (
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-[#0B1437] to-slate-950 text-white space-y-4">
+          <div className="relative flex items-center justify-center">
+            <div className="w-14 h-14 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+            <Image
+              src="/images/logo1.svg"
+              alt="Justemail Logo"
+              width={28}
+              height={28}
+              className="absolute w-7 h-7 object-contain opacity-90"
+            />
+          </div>
+          <div className="text-sm font-extrabold text-slate-200 tracking-wide">
+            Loading Admin Control Panel...
+          </div>
+          <div className="text-[11px] text-slate-400 font-medium">
+            Verifying Admin Session
+          </div>
+        </div>
+      ) : !isAdminLoggedIn ? (
         // ==========================================
         // LOGIN SCREEN (LIGHT THEME + NAVY GRADIENT BUTTON)
         // ==========================================
@@ -670,12 +771,6 @@ export default function AdminPage() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200"
             >
-              <div className="mb-6 p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
-                <div className="font-extrabold text-blue-950">Preset Admin Credentials:</div>
-                <div>ID: <span className="font-bold text-gray-900">{MANUAL_ADMIN_ID}</span></div>
-                <div>Password: <span className="font-bold text-gray-900">{MANUAL_ADMIN_PASS}</span></div>
-              </div>
-
               {errorMsg && (
                 <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -798,9 +893,7 @@ export default function AdminPage() {
                   <span>Public Website</span>
                 </Link>
 
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center relative">
-                  <Bell className="w-4 h-4" />
-                </div>
+
 
                 {/* NAVY BLUE LINEAR GRADIENT BUTTON FOR LOGOUT */}
                 <button
@@ -1196,12 +1289,21 @@ export default function AdminPage() {
                                     )}
                                   </td>
                                   <td className="p-4 text-right whitespace-nowrap">
-                                    <button
-                                      onClick={() => setSelectedEnquiryModal(enq)}
-                                      className="px-3 py-1.5 rounded-lg bg-[#0B1437] hover:bg-black text-white text-[11px] font-extrabold shadow-xs transition-all active:scale-95"
-                                    >
-                                      View Details
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() => setSelectedEnquiryModal(enq)}
+                                        className="px-3 py-1.5 rounded-lg bg-[#0B1437] hover:bg-black text-white text-[11px] font-extrabold shadow-xs transition-all active:scale-95"
+                                      >
+                                        View Details
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteEnquiry(enq.enquiry_id || enq.id)}
+                                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition-all active:scale-95 flex items-center justify-center shrink-0"
+                                        title="Delete Business Enquiry"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
@@ -2466,150 +2568,167 @@ export default function AdminPage() {
                   </div>
 
                 </form>
-
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* ==========================================
-          ENQUIRY DETAILS POPUP MODAL
+       {/* ==========================================
+          ENQUIRY DETAILS POPUP MODAL (REDESIGNED UI)
          ========================================== */}
       {selectedEnquiryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 selection:bg-blue-600 selection:text-white">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => setSelectedEnquiryModal(null)}
             className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
           />
 
+          {/* Modal Card */}
           <motion.div
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="relative bg-white w-full max-w-2xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200 z-10 overflow-hidden space-y-6 max-h-[90vh] overflow-y-auto"
+            className="relative bg-white w-full max-w-3xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200/80 z-10 overflow-hidden space-y-6 max-h-[92vh] overflow-y-auto"
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
-                  <Inbox className="w-5 h-5" />
+            {/* Modal Top Header Bar */}
+            <div className="flex items-start justify-between border-b border-gray-100 pb-5">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+                  <Inbox className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-                    Enquiry Ref #{selectedEnquiryModal.enquiry_id || selectedEnquiryModal.id}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-100">
+                      Enquiry #{selectedEnquiryModal.enquiry_id || selectedEnquiryModal.id}
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-400">
+                      {selectedEnquiryModal.created_at ? new Date(selectedEnquiryModal.created_at).toLocaleDateString() : "Recent"}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <h3 className="text-xl font-extrabold text-gray-900">
-                      {selectedEnquiryModal.organization_name}
-                    </h3>
-                    {selectedEnquiryModal.status === "Done" || selectedEnquiryModal.status === "done" ? (
-                      <span className="px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1 shrink-0">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>Done</span>
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          handleUpdateEnquiryStatus(selectedEnquiryModal.id || selectedEnquiryModal.enquiry_id, "Done");
-                          setSelectedEnquiryModal({ ...selectedEnquiryModal, status: "Done" });
-                        }}
-                        className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-colors shrink-0"
-                        title="Click to mark as Done"
-                      >
-                        Pending (Click to Mark Done)
-                      </button>
-                    )}
-                  </div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mt-1">
+                    {selectedEnquiryModal.organization_name}
+                  </h3>
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedEnquiryModal(null)}
-                className="p-2 rounded-xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedEnquiryModal.status === "Done" || selectedEnquiryModal.status === "done" ? (
+                  <span className="px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1.5 shrink-0 shadow-2xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Done</span>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleUpdateEnquiryStatus(selectedEnquiryModal.id || selectedEnquiryModal.enquiry_id, "Done");
+                      setSelectedEnquiryModal({ ...selectedEnquiryModal, status: "Done" });
+                    }}
+                    className="px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all shrink-0 active:scale-95 shadow-2xs"
+                    title="Click to mark as Done"
+                  >
+                    Pending (Mark Done)
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setSelectedEnquiryModal(null)}
+                  className="p-2 rounded-xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            {/* Grid Information */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              {/* Comprehensive Enquired Provider Plan Details */}
-              {(() => {
-                const matchedPlan = (() => {
-                  if (!adminProvidersList || adminProvidersList.length === 0) return null;
+            {/* Main Content Body */}
+            {(() => {
+              const matchedPlan = (() => {
+                if (!adminProvidersList || adminProvidersList.length === 0) return null;
 
-                  // 1. Match by provider_id
-                  if (selectedEnquiryModal.provider_id) {
-                    const byId = adminProvidersList.find(
-                      (p) => p.id === selectedEnquiryModal.provider_id
-                    );
-                    if (byId) return byId;
-                  }
-
-                  const reqProv = (selectedEnquiryModal.provider || "").toLowerCase().trim();
-                  const reqPlan = (selectedEnquiryModal.plan || "").toLowerCase().trim();
-
-                  // 2. Exact match by provider AND subtitle
-                  const byNameAndSubtitle = adminProvidersList.find((p) => {
-                    const pName = (p.name || "").toLowerCase().trim();
-                    const pSub = (p.subtitle || "").toLowerCase().trim();
-                    const pLogo = (p.logoType || "").toLowerCase().trim();
-                    const matchesProvider =
-                      (pName && (pName.includes(reqProv) || reqProv.includes(pName))) ||
-                      (pLogo && (pLogo.includes(reqProv) || reqProv.includes(pLogo)));
-                    const matchesPlan =
-                      pSub &&
-                      (pSub.includes(reqPlan) || reqPlan.includes(pSub));
-                    return matchesProvider && matchesPlan;
-                  });
-                  if (byNameAndSubtitle) return byNameAndSubtitle;
-
-                  // 3. Match by price digits in plan string (e.g. 333 vs 79, 555 vs 100)
-                  const reqPriceDigits = reqPlan.replace(/[^\d]/g, "");
-                  if (reqPriceDigits) {
-                    const byPrice = adminProvidersList.find((p) => {
-                      const pPriceDigits = (p.price || "").replace(/[^\d]/g, "");
-                      const pName = (p.name || "").toLowerCase();
-                      const pLogo = (p.logoType || "").toLowerCase();
-                      const matchesProvider =
-                        (pName && (pName.includes(reqProv) || reqProv.includes(pName))) ||
-                        (pLogo && (pLogo.includes(reqProv) || reqProv.includes(pLogo)));
-                      return matchesProvider && pPriceDigits === reqPriceDigits;
-                    });
-                    if (byPrice) return byPrice;
-                  }
-
-                  // 4. Fallback match by provider group
-                  return (
-                    adminProvidersList.find((p) => {
-                      const pName = (p.name || "").toLowerCase();
-                      const pLogo = (p.logoType || "").toLowerCase();
-                      return reqProv && (pName.includes(reqProv) || pLogo.includes(reqProv));
-                    }) || null
+                // 1. Match by provider_id
+                if (selectedEnquiryModal.provider_id) {
+                  const byId = adminProvidersList.find(
+                    (p) => p.id === selectedEnquiryModal.provider_id
                   );
-                })();
+                  if (byId) return byId;
+                }
 
-                const planTitle = matchedPlan
-                  ? `${matchedPlan.name} ${matchedPlan.subtitle ? `(${matchedPlan.subtitle})` : ""}`
-                  : selectedEnquiryModal.plan || selectedEnquiryModal.provider || "Custom Plan Enquiry";
+                const reqProv = (selectedEnquiryModal.provider || "").toLowerCase().trim();
+                const reqPlan = (selectedEnquiryModal.plan || "").toLowerCase().trim();
 
-                const priceDisplay = matchedPlan ? `${matchedPlan.price} ${matchedPlan.period}` : "Custom Quote";
-                const storageDisplay = matchedPlan?.storage || "Standard Storage";
-                const billingNoteDisplay = matchedPlan?.billingNote || "Billed annually";
-                const badgeTag = matchedPlan?.badge || "Customer Interest";
-                const featuresList: string[] = Array.isArray(matchedPlan?.features)
-                  ? matchedPlan.features
-                  : [];
+                // 2. Match by provider AND subtitle
+                const byNameAndSubtitle = adminProvidersList.find((p) => {
+                  const pName = (p.name || "").toLowerCase().trim();
+                  const pSub = (p.subtitle || "").toLowerCase().trim();
+                  const pLogo = (p.logoType || "").toLowerCase().trim();
+                  const matchesProvider =
+                    (pName && (pName.includes(reqProv) || reqProv.includes(pName))) ||
+                    (pLogo && (pLogo.includes(reqProv) || reqProv.includes(pLogo)));
+                  const matchesPlan =
+                    pSub &&
+                    (pSub.includes(reqPlan) || reqPlan.includes(pSub));
+                  return matchesProvider && matchesPlan;
+                });
+                if (byNameAndSubtitle) return byNameAndSubtitle;
 
+                // 3. Fallback match by provider group
                 return (
-                  <div className="sm:col-span-2 p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-[#0B1437] to-indigo-950 text-white space-y-4 shadow-lg border border-slate-800">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <div className="flex items-center gap-2">
-                        <Server className="w-5 h-5 text-blue-400" />
+                  adminProvidersList.find((p) => {
+                    const pName = (p.name || "").toLowerCase();
+                    const pLogo = (p.logoType || "").toLowerCase();
+                    return reqProv && (pName.includes(reqProv) || pLogo.includes(reqProv));
+                  }) || null
+                );
+              })();
+
+              const providerNameDisplay = matchedPlan?.name || selectedEnquiryModal.provider || "N/A";
+              const providerSubtitleDisplay = matchedPlan?.subtitle || (selectedEnquiryModal.plan && selectedEnquiryModal.plan !== selectedEnquiryModal.provider ? selectedEnquiryModal.plan : "N/A");
+              const priceDisplay = matchedPlan ? `${matchedPlan.price} ${matchedPlan.period || "/ mo"}` : (selectedEnquiryModal.plan?.includes("₹") ? selectedEnquiryModal.plan : "Custom Quote");
+              const planIdDisplay = selectedEnquiryModal.provider_id || matchedPlan?.id || selectedEnquiryModal.providerId || "N/A";
+
+              const planTitle = matchedPlan
+                ? `${matchedPlan.name} (${matchedPlan.subtitle || ""})`
+                : selectedEnquiryModal.plan || selectedEnquiryModal.provider || "Custom Plan Enquiry";
+
+              const badgeTag = matchedPlan?.badge || "Customer Interest";
+
+              const userSeats = Number(selectedEnquiryModal.user_count) || 1;
+              const reqPlanStr = selectedEnquiryModal.plan || selectedEnquiryModal.provider || "";
+              const extractedBasePrice = (() => {
+                if (matchedPlan?.price) {
+                  const d = String(matchedPlan.price).replace(/[^\d.]/g, "");
+                  if (d && !isNaN(parseFloat(d))) return parseFloat(d);
+                }
+                const currencyMatch = reqPlanStr.match(/(?:₹|rs\.?|inr|\$)\s*([\d]+(?:\.[\d]+)?)/i);
+                if (currencyMatch && currencyMatch[1]) return parseFloat(currencyMatch[1]);
+                const digits = reqPlanStr.replace(/[^\d.]/g, "");
+                return (digits && !isNaN(parseFloat(digits))) ? parseFloat(digits) : 136;
+              })();
+
+              const monthlyBaseRate = extractedBasePrice * userSeats;
+              const annualBaseSubtotal = monthlyBaseRate * 12;
+              const gstTax = Math.round(annualBaseSubtotal * 0.18);
+              const totalAmount = annualBaseSubtotal + gstTax;
+
+              return (
+                <div className="space-y-6 text-xs">
+
+                  {/* --- 1. CUSTOMER INTEREST PROVIDER PLAN SPECIFICATIONS CARD --- */}
+                  <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-slate-950 via-[#0B1437] to-slate-900 text-white space-y-4 shadow-xl border border-slate-800 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="flex items-center justify-between border-b border-slate-800/80 pb-3.5 relative z-10">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-400/30 flex items-center justify-center shrink-0">
+                          <Server className="w-4 h-4" />
+                        </div>
                         <div>
-                          <h4 className="text-sm font-black text-white">{planTitle}</h4>
-                          <span className="text-[10px] text-slate-400 font-medium">Provider Plan Specifications</span>
+                          <h4 className="text-sm sm:text-base font-extrabold text-white">{planTitle}</h4>
+                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Customer Interest Plan Details</span>
                         </div>
                       </div>
                       <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-wider shadow-xs">
@@ -2617,183 +2736,168 @@ export default function AdminPage() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                      {/* Price & Billing */}
-                      <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase block">Plan Price</span>
-                        <div className="text-sm font-black text-emerald-400 mt-0.5">{priceDisplay}</div>
-                        <div className="text-[10px] text-slate-400 font-medium mt-0.5">{billingNoteDisplay}</div>
+                    {/* 4 Primary Customer Interest Fields */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs relative z-10">
+                      {/* Provider Name */}
+                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Provider Name</span>
+                        <div className="text-sm font-black text-white">{providerNameDisplay}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">Email Platform</div>
                       </div>
 
-                      {/* Mailbox Storage */}
-                      <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase block">Mailbox Storage</span>
-                        <div className="text-sm font-black text-blue-300 mt-0.5">{storageDisplay}</div>
-                        <div className="text-[10px] text-slate-400 font-medium mt-0.5">Cloud Storage Quota</div>
+                      {/* Provider Subtitle */}
+                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Provider Subtitle</span>
+                        <div className="text-sm font-black text-blue-300">{providerSubtitleDisplay}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">Plan Tier</div>
                       </div>
 
-                      {/* Provider ID */}
-                      <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase block">Provider Reference ID</span>
-                        <div className="text-xs font-mono font-bold text-indigo-300 mt-1 truncate">
-                          {selectedEnquiryModal.provider_id || matchedPlan?.id || "N/A"}
+                      {/* Plan Price */}
+                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Price</span>
+                        <div className="text-sm font-black text-emerald-400">{priceDisplay}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">Billed annually</div>
+                      </div>
+
+                      {/* Plan ID */}
+                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan ID</span>
+                        <div className="text-xs font-mono font-bold text-indigo-300 truncate" title={planIdDisplay}>
+                          {planIdDisplay}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-medium mt-0.5">Unique Plan ID</div>
+                        <div className="text-[10px] text-slate-400 font-medium">Unique Plan Reference</div>
                       </div>
                     </div>
-
-                    {/* Features List */}
-                    {featuresList.length > 0 && (
-                      <div className="pt-1 space-y-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase block">
-                          Included Plan Features ({featuresList.length})
-                        </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          {featuresList.map((feat: string, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2 text-slate-200 font-medium bg-slate-800/50 p-2 rounded-lg border border-slate-700/40">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                              <span className="truncate">{feat}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                );
-              })()}
 
-              {/* Order Total Summary Details Card */}
-              {(() => {
-                const userSeats = Number(selectedEnquiryModal.user_count) || 1;
-                const reqPlanStr = selectedEnquiryModal.plan || selectedEnquiryModal.provider || "";
-                const extractedBasePrice = (() => {
-                  const digits = reqPlanStr.replace(/[^\d]/g, "");
-                  return digits ? parseInt(digits, 10) : 136;
-                })();
-
-                const monthlyBaseRate = extractedBasePrice * userSeats;
-                const annualBaseSubtotal = monthlyBaseRate * 12;
-                const gstTax = Math.round(annualBaseSubtotal * 0.18);
-                const totalAmount = annualBaseSubtotal + gstTax;
-
-                return (
-                  <div className="sm:col-span-2 p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 shadow-xs">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                      <div className="flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-blue-600" />
+                  {/* --- 2. FINANCIAL ORDER TOTAL SUMMARY CARD --- */}
+                  <div className="p-5 sm:p-6 rounded-3xl bg-slate-50 border border-slate-200/80 space-y-4 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                          <ReceiptText className="w-4.5 h-4.5" />
+                        </div>
                         <div>
-                          <h4 className="text-sm font-black text-gray-900">Order Total Summary Details</h4>
-                          <span className="text-[10px] text-gray-500 font-medium">Financial Breakdown & 18% GST</span>
+                          <h4 className="text-sm sm:text-base font-extrabold text-gray-900">Order Total Summary Details</h4>
+                          <span className="text-[10px] text-gray-500 font-medium">Financial Calculation & 18% GST Breakdown</span>
                         </div>
                       </div>
-                      <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 uppercase tracking-wider">
-                        Annual Breakdown
+                      <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 uppercase tracking-wider">
+                        Annual Quote
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                       {/* Number of User Seats */}
-                      <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase block">Number of User Seats</span>
-                        <div className="text-sm font-black text-gray-900 mt-0.5">{userSeats} Seat{userSeats > 1 ? "s" : ""}</div>
-                        <div className="text-[10px] text-gray-400 font-medium mt-0.5">Enquired Mailboxes</div>
+                      <div className="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-gray-500 uppercase block">User Seats</span>
+                        <div className="text-base font-black text-gray-900">{userSeats} Seat{userSeats > 1 ? "s" : ""}</div>
+                        <div className="text-[10px] text-gray-400 font-medium">Enquired Mailboxes</div>
                       </div>
 
                       {/* Monthly Base Rate */}
-                      <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase block">Monthly Base Rate ({userSeats} seat{userSeats > 1 ? "s" : ""})</span>
-                        <div className="text-sm font-black text-indigo-600 mt-0.5">₹{monthlyBaseRate.toLocaleString("en-IN")} / mo</div>
-                        <div className="text-[10px] text-gray-400 font-medium mt-0.5">₹{extractedBasePrice} per seat/mo</div>
+                      <div className="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-gray-500 uppercase block">Monthly Base Rate</span>
+                        <div className="text-base font-black text-indigo-600">₹{monthlyBaseRate.toLocaleString("en-IN")} / mo</div>
+                        <div className="text-[10px] text-gray-400 font-medium">₹{extractedBasePrice} per seat/mo</div>
                       </div>
 
-                      {/* Annual Base Subtotal */}
-                      <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase block">Annual Base Subtotal (12 months)</span>
-                        <div className="text-sm font-black text-slate-800 mt-0.5">₹{annualBaseSubtotal.toLocaleString("en-IN")}</div>
-                        <div className="text-[10px] text-gray-400 font-medium mt-0.5">Base Fee Before Tax</div>
+                      {/* Annual Subtotal */}
+                      <div className="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-gray-500 uppercase block">Annual Subtotal</span>
+                        <div className="text-base font-black text-slate-800">₹{annualBaseSubtotal.toLocaleString("en-IN")}</div>
+                        <div className="text-[10px] text-gray-400 font-medium">12 Months Base Fee</div>
                       </div>
 
-                      {/* GST Tax (18%) */}
-                      <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase block">GST Tax (18%)</span>
-                        <div className="text-sm font-black text-amber-600 mt-0.5">₹{gstTax.toLocaleString("en-IN")}</div>
-                        <div className="text-[10px] text-gray-400 font-medium mt-0.5">Govt Tax Component</div>
+                      {/* GST Tax */}
+                      <div className="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-gray-500 uppercase block">GST Tax (18%)</span>
+                        <div className="text-base font-black text-amber-600">₹{gstTax.toLocaleString("en-IN")}</div>
+                        <div className="text-[10px] text-gray-400 font-medium">Govt Tax Component</div>
                       </div>
                     </div>
 
-                    {/* Total Amount Banner */}
-                    <div className="p-3.5 rounded-xl bg-[#0B1437] text-white flex items-center justify-between shadow-xs">
+                    {/* Total Estimated Amount Banner */}
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-[#0B1437] to-slate-900 text-white flex items-center justify-between shadow-md border border-slate-800">
                       <div>
-                        <div className="text-xs font-black uppercase tracking-wider text-blue-300">Total Amount (Inc. 18% GST)</div>
-                        <div className="text-[10px] text-slate-300 font-medium">Grand Annual Estimated Total</div>
+                        <div className="text-xs font-black uppercase tracking-wider text-blue-400">Total Amount (Inc. 18% GST)</div>
+                        <div className="text-[11px] text-slate-300 font-medium">Grand Annual Estimated Total</div>
                       </div>
-                      <div className="text-xl font-black text-emerald-400">
+                      <div className="text-2xl font-black text-emerald-400">
                         ₹{totalAmount.toLocaleString("en-IN")}
                       </div>
                     </div>
                   </div>
-                );
-              })()}
 
-              {/* Organization & Domain */}
-              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
-                <div className="font-extrabold text-gray-900 flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-blue-600" />
-                  <span>Organization & Domain</span>
+                  {/* --- 3. CUSTOMER ORGANISATION & CONTACT DETAILS GRID --- */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Organization & Domain */}
+                    <div className="p-4 rounded-2xl bg-white border border-gray-200 space-y-2 shadow-2xs">
+                      <div className="font-extrabold text-gray-900 flex items-center gap-2 text-xs">
+                        <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span>Organization & Domain</span>
+                      </div>
+                      <div className="space-y-1 text-gray-700 text-xs">
+                        <div><strong>Company:</strong> {selectedEnquiryModal.organization_name}</div>
+                        <div><strong>Domain:</strong> <span className="text-blue-600 font-bold">{selectedEnquiryModal.domain}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Contact Person */}
+                    <div className="p-4 rounded-2xl bg-white border border-gray-200 space-y-2 shadow-2xs">
+                      <div className="font-extrabold text-gray-900 flex items-center gap-2 text-xs">
+                        <User className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span>Contact Information</span>
+                      </div>
+                      <div className="space-y-1 text-gray-700 text-xs">
+                        <div><strong>Name:</strong> {selectedEnquiryModal.first_name} {selectedEnquiryModal.last_name}</div>
+                        <div><strong>Primary Email:</strong> {selectedEnquiryModal.email}</div>
+                        <div><strong>Alt Email:</strong> {selectedEnquiryModal.alternative_email || "N/A"}</div>
+                        <div><strong>Phone:</strong> {selectedEnquiryModal.phone_number?.startsWith("+91") ? selectedEnquiryModal.phone_number : `+91 ${selectedEnquiryModal.phone_number}`}</div>
+                      </div>
+                    </div>
+
+                    {/* Full Address */}
+                    <div className="sm:col-span-2 p-4 rounded-2xl bg-white border border-gray-200 space-y-2 shadow-2xs">
+                      <div className="font-extrabold text-gray-900 flex items-center gap-2 text-xs">
+                        <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span>Address Details</span>
+                      </div>
+                      <div className="text-gray-700 text-xs">
+                        {selectedEnquiryModal.address ? `${selectedEnquiryModal.address}, ` : ""}
+                        {selectedEnquiryModal.city}, {selectedEnquiryModal.state} - {selectedEnquiryModal.zip}
+                      </div>
+                    </div>
+
+                    {/* Customer Notes */}
+                    <div className="sm:col-span-2 p-4 rounded-2xl bg-slate-900 text-white space-y-2 shadow-2xs">
+                      <div className="font-extrabold text-slate-200 flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                          <span>Submitted Customer Notes</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-normal">200 Words Limit</span>
+                      </div>
+                      <p className="text-xs text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                        {selectedEnquiryModal.notes || "No additional notes provided."}
+                      </p>
+                    </div>
+                  </div>
+
                 </div>
-                <div className="text-gray-700"><strong>Company:</strong> {selectedEnquiryModal.organization_name}</div>
-                <div className="text-gray-700"><strong>Domain:</strong> {selectedEnquiryModal.domain}</div>
+              );
+            })()}
+
+            {/* Modal Bottom Footer Actions */}
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 text-xs">
+              <div className="text-gray-400 font-medium text-[11px]">
+                Enquiry Received: {selectedEnquiryModal.created_at ? new Date(selectedEnquiryModal.created_at).toLocaleString() : "Recently"}
               </div>
-
-              {/* Contact Person Details */}
-              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
-                <div className="font-extrabold text-gray-900 flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-blue-600" />
-                  <span>Contact Information</span>
-                </div>
-                <div className="text-gray-700"><strong>Name:</strong> {selectedEnquiryModal.first_name} {selectedEnquiryModal.last_name}</div>
-                <div className="text-gray-700"><strong>Primary Email:</strong> {selectedEnquiryModal.email}</div>
-                <div className="text-gray-700"><strong>Alt Email:</strong> {selectedEnquiryModal.alternative_email}</div>
-                <div className="text-gray-700"><strong>Phone:</strong> {selectedEnquiryModal.phone_number?.startsWith("+91") ? selectedEnquiryModal.phone_number : `+91 ${selectedEnquiryModal.phone_number}`}</div>
-              </div>
-
-              {/* Full Address */}
-              <div className="sm:col-span-2 p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
-                <div className="font-extrabold text-gray-900 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-blue-600" />
-                  <span>Address Details</span>
-                </div>
-                <div className="text-gray-700">
-                  {selectedEnquiryModal.address ? `${selectedEnquiryModal.address}, ` : ""}
-                  {selectedEnquiryModal.city}, {selectedEnquiryModal.state} - {selectedEnquiryModal.zip}
-                </div>
-              </div>
-
-              {/* Notes / Message */}
-              <div className="sm:col-span-2 p-4 rounded-2xl bg-slate-900 text-white space-y-2">
-                <div className="font-extrabold text-slate-200 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <FileText className="w-4 h-4 text-blue-400" />
-                    <span>Submitted Notes</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400">Fixed 200 Words Limit</span>
-                </div>
-                <p className="text-xs text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
-                  {selectedEnquiryModal.notes || "No notes provided by customer."}
-                </p>
-              </div>
-            </div>
-
-            {/* Footer Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 text-xs">
-              <span className="text-gray-400 font-medium text-[11px]">
-                Submitted: {selectedEnquiryModal.created_at ? new Date(selectedEnquiryModal.created_at).toLocaleString() : "Recently"}
-              </span>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <a
                   href={`mailto:${selectedEnquiryModal.email}`}
-                  className="px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold border border-blue-200 transition-colors flex items-center gap-1.5 justify-center flex-1 sm:flex-none"
+                  className="px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold border border-blue-200 transition-colors flex items-center gap-1.5 justify-center flex-1 sm:flex-none"
                 >
                   <Mail className="w-3.5 h-3.5" />
                   <span>Send Email</span>
@@ -2805,6 +2909,14 @@ export default function AdminPage() {
                   <Phone className="w-3.5 h-3.5" />
                   <span>Call Contact</span>
                 </a>
+                <button
+                  onClick={() => handleDeleteEnquiry(selectedEnquiryModal.enquiry_id || selectedEnquiryModal.id)}
+                  className="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold border border-rose-200 transition-all flex items-center gap-1.5 justify-center shrink-0 active:scale-95"
+                  title="Delete Enquiry Record"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Delete</span>
+                </button>
               </div>
             </div>
           </motion.div>

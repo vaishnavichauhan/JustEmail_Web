@@ -19,7 +19,7 @@ import {
     Sparkles,
     AlertCircle,
     Server,
-    Receipt,
+    ReceiptText,
     Lock,
     Check
 } from "lucide-react";
@@ -29,17 +29,104 @@ import Footer from "@/components/Footer";
 function EnquiryFormContent() {
     const searchParams = useSearchParams();
 
-    const providerParam = searchParams.get("provider") || "Business Email Provider";
-    const planParam = searchParams.get("plan") || "Custom Business Plan";
+    const rawProviderParam = searchParams.get("provider") || "Business Email Provider";
+    const rawPlanParam = searchParams.get("plan") || "Custom Business Plan";
     const providerIdParam = searchParams.get("providerId") || searchParams.get("id") || "";
 
-    // Parse numeric price from planParam or default to 136
-    const extractPriceDigits = (str: string) => {
-        const digits = str.replace(/[^\d]/g, "");
-        return digits ? parseInt(digits, 10) : 136;
+    // Smart price extractor helper
+    const extractPrice = (str: string): number | null => {
+        if (!str) return null;
+        const cleanStr = str.trim();
+
+        // 1. Explicit currency symbol e.g. ₹130, ₹ 130.45, Rs 130, $130
+        const currencyMatch = cleanStr.match(/(?:₹|rs\.?|inr|\$)\s*([\d]+(?:\.[\d]+)?)/i);
+        if (currencyMatch && currencyMatch[1]) {
+            const val = parseFloat(currencyMatch[1]);
+            if (!isNaN(val) && val > 0) return val;
+        }
+
+        // 2. Price inside parentheses e.g. (130) or (130/mo)
+        const parenMatch = cleanStr.match(/\(\s*(?:₹|rs\.?|inr|\$)?\s*([\d]+(?:\.[\d]+)?)[^)]*\)/i);
+        if (parenMatch && parenMatch[1]) {
+            const val = parseFloat(parenMatch[1]);
+            if (!isNaN(val) && val > 0) return val;
+        }
+
+        // 3. Price with rate unit e.g. 130/mo, 130 per user
+        const rateMatch = cleanStr.match(/([\d]+(?:\.[\d]+)?)\s*(?:\/|\s)*(?:user|mo|month|yr|year)/i);
+        if (rateMatch && rateMatch[1]) {
+            const val = parseFloat(rateMatch[1]);
+            if (!isNaN(val) && val > 0) return val;
+        }
+
+        // 4. Pure numeric string e.g. "130" or "130.45"
+        if (/^\s*[\d]+(?:\.[\d]+)?\s*$/.test(cleanStr)) {
+            const val = parseFloat(cleanStr);
+            if (!isNaN(val) && val > 0) return val;
+        }
+
+        return null;
     };
 
-    const basePricePerMonth = extractPriceDigits(planParam);
+    const [providerParam, setProviderParam] = useState(rawProviderParam);
+    const [planParam, setPlanParam] = useState(rawPlanParam);
+    const [basePricePerMonth, setBasePricePerMonth] = useState<number>(() => {
+        const p1 = extractPrice(rawPlanParam);
+        if (p1 !== null) return p1;
+        const p2 = extractPrice(rawProviderParam);
+        if (p2 !== null) return p2;
+        return 136;
+    });
+
+    useEffect(() => {
+        let isMounted = true;
+        async function resolvePlanDetails() {
+            try {
+                const res = await fetch("/api/providers");
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.data || !Array.isArray(data.data)) return;
+
+                const providers: any[] = data.data;
+
+                // Match by exact ID or slug
+                const matchedById = providers.find(
+                    (p: any) =>
+                        p.id === rawPlanParam ||
+                        p.id === providerIdParam ||
+                        p.id === rawProviderParam
+                );
+
+                // Or match by subtitle / provider name
+                const matchedByName = matchedById || providers.find(
+                    (p: any) =>
+                        (p.subtitle && rawPlanParam.toLowerCase().includes(p.subtitle.toLowerCase())) ||
+                        (p.name && rawProviderParam.toLowerCase().includes(p.name.toLowerCase()))
+                );
+
+                const target = matchedById || matchedByName;
+
+                if (target && isMounted) {
+                    if (target.name) {
+                        setProviderParam(target.name);
+                    }
+                    const rawPrice = target.price ? String(target.price) : "";
+                    const dbPrice = extractPrice(rawPrice);
+                    if (dbPrice !== null) {
+                        setBasePricePerMonth(dbPrice);
+                    }
+                    const planTitle = target.subtitle || target.name || rawPlanParam;
+                    setPlanParam(rawPrice ? `${planTitle} (${rawPrice})` : planTitle);
+                }
+            } catch (e) {
+                console.error("Error resolving provider plan in enquiry form:", e);
+            }
+        }
+        resolvePlanDetails();
+        return () => {
+            isMounted = false;
+        };
+    }, [rawPlanParam, rawProviderParam, providerIdParam]);
 
     const domainParam = searchParams.get("domain") || "";
 
@@ -594,7 +681,7 @@ function EnquiryFormContent() {
                             {/* Order Total Summary Header */}
                             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                                 <h3 className="text-base font-black text-gray-900 flex items-center gap-2">
-                                    <Receipt className="w-5 h-5 text-blue-600" />
+                                    <ReceiptText className="w-5 h-5 text-blue-600" />
                                     <span>Order Total Summary</span>
                                 </h3>
                                 <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
@@ -705,13 +792,13 @@ function EnquiryFormContent() {
                             </button>
 
                             {/* Guarantees Badge Box */}
-                            <div className="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-100 flex items-center gap-3 text-xs text-gray-700">
+                            {/* <div className="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-100 flex items-center gap-3 text-xs text-gray-700">
                                 <ShieldCheck className="w-7 h-7 text-blue-600 shrink-0" />
                                 <div>
                                     <div className="font-bold text-gray-900 text-[11px]">100% SLA Guarantee & Free Migration</div>
                                     <div className="text-[10px] text-gray-500">Certified engineers handle zero-downtime setup</div>
                                 </div>
-                            </div>
+                            </div> */}
 
                         </div>
                     </div>

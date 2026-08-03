@@ -152,7 +152,7 @@ export default function Hero({
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-800 bg-slate-950 p-2 group">
                 <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
                   <Image
-                    src="/images/hero-dashboard.png"
+                    src="/images/heroDashbord.png"
                     alt="justEmails 3D Mail Console Dashboard"
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"

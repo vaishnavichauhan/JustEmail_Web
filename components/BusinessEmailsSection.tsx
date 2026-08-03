@@ -317,10 +317,7 @@ export default function BusinessEmailsSection({
                               <HardDrive className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                               <span>{card.storage}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                              <span>{card.uptime}</span>
-                            </div>
+                            
                             <div className="flex items-center gap-1.5 col-span-2">
                               <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                               <span>{card.recommendedUsers}</span>

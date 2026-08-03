@@ -112,7 +112,7 @@ export default function HomePageFaqSection() {
   const currentCategory = homeFaqCategories.find((c) => c.id === activeTab) || homeFaqCategories[0];
 
   return (
-    <section className="py-20 bg-[#F8FAFC] border-t border-gray-200/80">
+    <section id="faqs" className="py-20 bg-[#F8FAFC] border-t border-gray-200/80 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section Header */}

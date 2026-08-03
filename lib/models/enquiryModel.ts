@@ -210,4 +210,27 @@ export const EnquiryModel = {
 
     return true;
   },
+
+  // Delete enquiry record by ID or enquiry_id
+  async delete(id: number | string): Promise<boolean> {
+    const isNumeric = typeof id === "number" || (/^\d+$/).test(String(id));
+    const targetStr = String(id);
+    inMemoryEnquiries = inMemoryEnquiries.filter((e) =>
+      isNumeric ? String(e.id) !== targetStr : e.enquiry_id !== targetStr
+    );
+
+    try {
+      await this.ensureTableExists();
+
+      if (isNumeric) {
+        await db.query("DELETE FROM enquiries WHERE id = ?", [Number(id)]);
+      } else {
+        await db.query("DELETE FROM enquiries WHERE enquiry_id = ?", [String(id)]);
+      }
+    } catch (e) {
+      console.warn("EnquiryModel.delete MySQL fallback:", e);
+    }
+
+    return true;
+  },
 };

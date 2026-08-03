@@ -203,12 +203,6 @@ export default function ResellerPage() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200"
             >
-              <div className="mb-6 p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900 space-y-1">
-                <div className="font-extrabold text-indigo-950">Preset Reseller Credentials:</div>
-                <div>ID: <span className="font-bold text-gray-900">{DEMO_RESELLER_ID}</span></div>
-                <div>Password: <span className="font-bold text-gray-900">{DEMO_RESELLER_PASS}</span></div>
-              </div>
-
               {errorMsg && (
                 <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />

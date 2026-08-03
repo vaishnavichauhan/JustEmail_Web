@@ -233,9 +233,9 @@ export default function LoginPage() {
                   <label className="block text-xs font-extrabold text-gray-700 uppercase">
                     Password
                   </label>
-                  <span className="text-[11px] font-extrabold text-blue-600 hover:underline cursor-pointer">
+                  {/* <span className="text-[11px] font-extrabold text-blue-600 hover:underline cursor-pointer">
                     Forgot Password?
-                  </span>
+                  </span> */}
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
