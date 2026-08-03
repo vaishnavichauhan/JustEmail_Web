@@ -74,12 +74,12 @@ export default function Navbar({
             {/* Left Side: Official Justemail Brand Logo */}
             <Link href="/" className="flex items-center gap-2 group shrink-0">
               <Image
-                src="/images/justemail-logo.png"
+                src="/images/logo1.svg"
                 alt="Justemail Logo"
-                width={180}
-                height={50}
+                width={240}
+                height={80}
                 priority
-                className="h-9 sm:h-10 w-auto object-contain hover:scale-105 transition-transform"
+                className="h-12 sm:h-14 md:h-16 w-auto object-contain hover:scale-105 transition-transform"
               />
             </Link>
 

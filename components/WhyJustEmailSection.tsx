@@ -67,7 +67,7 @@ export default function WhyJustEmailSection() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4 flex items-center justify-center gap-3">
             <span>Why</span>
             <Image
-              src="/images/justemail-logo.png"
+              src="/images/logo1.svg"
               alt="Justemail Logo"
               width={220}
               height={60}

@@ -218,7 +218,7 @@ export default function AuthModal({ isOpen, mode: initialMode, onClose }: AuthMo
           {/* Company Logo Header */}
           <div className="text-center mb-6 relative z-10">
             <Image
-              src="/images/justemail-logo.png"
+              src="/images/logo1.svg"
               alt="Justemail Logo"
               width={160}
               height={45}

@@ -1,20 +1,92 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Phone, MapPin, ShieldCheck, ArrowRight, Globe } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  ShieldCheck,
+  ArrowRight,
+  Globe,
+  Clock,
+  CheckCircle2,
+  Send,
+  Zap,
+  Server,
+  Lock,
+  Headphones,
+  FileText,
+  Building2,
+  Award,
+  Sparkles,
+  Instagram,
+  ExternalLink,
+  Facebook,
+  Linkedin
+} from "lucide-react";
 
 export default function Footer() {
-  return (
-    <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 text-xs selection:bg-blue-600 selection:text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+  const [emailInput, setEmailInput] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
 
-          {/* Column 1: Brand & Tagline */}
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (emailInput.trim()) {
+      setSubscribed(true);
+      setEmailInput("");
+      setTimeout(() => setSubscribed(false), 5000);
+    }
+  };
+
+  return (
+    <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 text-xs selection:bg-blue-600 selection:text-white relative overflow-hidden">
+
+      {/* Background Decorative Glow Effects */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none" />
+
+
+
+      {/* FEATURE HIGHLIGHTS BAR */}
+      <div className="border-b border-slate-800/60 bg-slate-950/80 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+
+            <div className="flex items-center justify-center gap-2.5 text-slate-300 text-[11px] font-medium py-1">
+              <Headphones className="w-4 h-4 text-blue-400 shrink-0" />
+              <span>24/7 Managed Engineering Support</span>
+            </div>
+
+            <div className="flex items-center justify-center gap-2.5 text-slate-300 text-[11px] font-medium py-1">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>FIPS 140-2 AES-256 Encryption</span>
+            </div>
+
+            <div className="flex items-center justify-center gap-2.5 text-slate-300 text-[11px] font-medium py-1">
+              <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Zero-Downtime Migration SLA</span>
+            </div>
+
+            <div className="flex items-center justify-center gap-2.5 text-slate-300 text-[11px] font-medium py-1">
+              <Server className="w-4 h-4 text-purple-400 shrink-0" />
+              <span>Hybrid Cross-Tenant Coexistence</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN MULTI-COLUMN FOOTER CONTENT */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
+
+          {/* Column 1: Brand Info & Contact (Spans 2 columns on lg) */}
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-block bg-white px-4 py-2 rounded-2xl shadow-md hover:scale-105 transition-transform">
               <Image
-                src="/images/justemail-logo.png"
+                src="/images/logo1.svg"
                 alt="Justemail Logo"
                 width={180}
                 height={50}
@@ -23,28 +95,69 @@ export default function Footer() {
             </Link>
 
             <p className="text-slate-400 leading-relaxed text-xs max-w-sm">
-              Unified business email deployment, split-domain cross-tenant coexistence, automated cloud backups, and 24/7 managed administration for fast-growing businesses.
+              Justemail is a next-generation business email infrastructure partner delivering unified email deployment, split-domain cross-tenant coexistence, cloud backup archiving, and 24/7 managed administration for modern enterprises.
             </p>
 
-            <div className="space-y-2 pt-2 text-slate-300">
-              <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                <span>support@justemails.in</span>
+            <div className="space-y-2.5 pt-2 text-slate-300 text-xs">
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+                <a href="mailto:support@justemails.in" className="hover:text-white transition-colors">
+                  support@justemails.in
+                </a>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <div className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>+91 XXXXX XXXXX</span>
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                <span>Vadodara, India</span>
+              <div className="flex items-center gap-2.5">
+                <MapPin className="w-4 h-4 text-purple-400 shrink-0" />
+                <span>Vadodara, Gujarat, India</span>
               </div>
+              <div className="flex items-center gap-2.5 text-slate-400 text-[11px]">
+                <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>24/7/365 Infrastructure Operations</span>
+              </div>
+            </div>
+
+            {/* Social Links */}
+            <div className="pt-3 flex items-center gap-3">
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-600 transition-all"
+                title="LinkedIn"
+              >
+                <Linkedin size={16} />
+              </a>
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noreferrer"
+                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-700 hover:border-blue-700 transition-all"
+                title="Facebook"
+              >
+                <Facebook size={16} />
+              </a>
+              <a
+                href="https://www.instagram.com/just_email__?igsh=MWZvOHMyeWpkcjc4Zg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-pink-600 hover:border-pink-600 transition-all"
+                title="Instagram"
+              >
+
+                <Instagram size={16} />
+              </a>
             </div>
           </div>
 
           {/* Column 2: Business Email Platforms */}
           <div className="space-y-3">
-            <div className="font-extrabold text-white uppercase tracking-wider text-xs">Email Platforms</div>
+            <div className="font-extrabold text-white uppercase tracking-wider text-xs flex items-center gap-1.5">
+              <Server className="w-3.5 h-3.5 text-blue-400" />
+              <span>Email Platforms</span>
+            </div>
             <ul className="space-y-2 text-xs">
               <li>
                 <Link href="/business-emails/google-workspace" className="hover:text-white transition-colors">
@@ -58,12 +171,12 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/business-emails/zoho-mail" className="hover:text-white transition-colors">
-                  Zoho Mail
+                  Zoho Mail Enterprise
                 </Link>
               </li>
               <li>
                 <Link href="/business-emails/titan-mail" className="hover:text-white transition-colors">
-                  Titan Mail
+                  Titan Mail Business
                 </Link>
               </li>
               <li>
@@ -72,8 +185,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/cross-tenant" className="hover:text-blue-400 font-bold transition-colors">
-                  Cross-Tenant Coexistence
+                <Link href="/cross-tenant" className="hover:text-blue-400 font-bold transition-colors flex items-center gap-1">
+                  <span>Cross-Tenant Coexistence</span>
+                  <Sparkles className="w-3 h-3 text-amber-400" />
                 </Link>
               </li>
             </ul>
@@ -81,16 +195,19 @@ export default function Footer() {
 
           {/* Column 3: Solutions & Services */}
           <div className="space-y-3">
-            <div className="font-extrabold text-white uppercase tracking-wider text-xs">Services & Solutions</div>
+            <div className="font-extrabold text-white uppercase tracking-wider text-xs flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Solutions & Services</span>
+            </div>
             <ul className="space-y-2 text-xs">
               <li>
                 <Link href="/management" className="hover:text-white transition-colors">
-                  Email Management Services
+                  Managed Email Administration
                 </Link>
               </li>
               <li>
                 <Link href="/backup" className="hover:text-white transition-colors">
-                  Email Backup & Archiving
+                  Cloud Backup & Archiving
                 </Link>
               </li>
               <li>
@@ -108,12 +225,62 @@ export default function Footer() {
                   Plan Comparison Matrix
                 </Link>
               </li>
+              <li>
+                <Link href="/enquiryForm" className="hover:text-white transition-colors">
+                  Enterprise Migration Audit
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Column 4: Trust & Compliance */}
+          {/* Column 4: Quick Portals & Tools */}
           <div className="space-y-3">
-            <div className="font-extrabold text-white uppercase tracking-wider text-xs">Trust & Legal</div>
+            <div className="font-extrabold text-white uppercase tracking-wider text-xs flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-purple-400" />
+              <span>Portals & Tools</span>
+            </div>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <Link href="/" className="text-indigo-400 hover:text-indigo-300 font-extrabold transition-colors flex items-center gap-1">
+                  <span>Reseller Partner Portal</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin" className="text-blue-400 hover:text-blue-300 font-extrabold transition-colors flex items-center gap-1">
+                  <span>Admin Portal</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare" className="hover:text-white transition-colors">
+                  Compare Plan Features
+                </Link>
+              </li>
+              <li>
+                <Link href="/checkout" className="hover:text-white transition-colors">
+                  Cart & Instant Checkout
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="hover:text-white transition-colors">
+                  Client Account Sign In
+                </Link>
+              </li>
+              <li>
+                <Link href="/signup" className="hover:text-white transition-colors">
+                  Create New Account
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 5: Trust & Legal */}
+          <div className="space-y-3">
+            <div className="font-extrabold text-white uppercase tracking-wider text-xs flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span>Trust & Legal</span>
+            </div>
             <ul className="space-y-2 text-xs">
               <li>
                 <Link href="/#why-je" className="hover:text-white transition-colors">
@@ -126,51 +293,63 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/reseller" className="text-indigo-400 hover:text-indigo-300 font-extrabold transition-colors">
-                  Reseller Partner Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="text-blue-400 hover:text-blue-300 font-extrabold transition-colors">
-                  Super Admin Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy-policy" className="hover:text-white transition-colors">
+                <span className="text-slate-400 cursor-pointer hover:text-slate-300 transition-colors">
                   Privacy Policy
-                </Link>
+                </span>
               </li>
               <li>
-                <Link href="/terms-of-service" className="hover:text-white transition-colors">
+                <span className="text-slate-400 cursor-pointer hover:text-slate-300 transition-colors">
                   Terms of Service
-                </Link>
+                </span>
               </li>
               <li>
-                <Link href="/acceptable-use-policy" className="hover:text-white transition-colors">
+                <span className="text-slate-400 cursor-pointer hover:text-slate-300 transition-colors">
                   Acceptable Use Policy
-                </Link>
+                </span>
               </li>
             </ul>
           </div>
 
         </div>
 
-        {/* Bottom Copyright & Guarantee Bar */}
-        <div className="mt-12 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-xs">
-          <div>
-            © 2026 <strong className="text-slate-300 font-bold">justEmails</strong>. All rights reserved. Registered Business Email Infrastructure Partner.
+        {/* BOTTOM COPYRIGHT & STATUS BAR */}
+        <div className="mt-14 pt-8 border-t border-slate-800/80 flex flex-col lg:flex-row items-center justify-between gap-6 text-slate-500 text-xs">
+
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-center lg:text-left">
+            <span>© {new Date().getFullYear()}</span>
+            <strong className="text-slate-300 font-bold">justEmails Technologies Pvt. Ltd.</strong>
+            <span>All rights reserved. Registered Enterprise Email Infrastructure Provider.</span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-400 font-medium">
-            <div className="flex items-center gap-1.5 text-emerald-400">
-              <ShieldCheck className="w-4 h-4" />
-              <span>FIPS 140-2 AES-256 Encrypted</span>
+          {/* Live System Operational Status & Encryption Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-5 text-slate-400 font-medium">
+
+            {/* Live Status Pill */}
+            <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-full text-[11px]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-slate-300 font-semibold">All Infrastructure Operational</span>
             </div>
-            {/* <span>•</span>
-            <div>99.9% Uptime Guarantee</div> */}
+
+            {/* Encryption Pill */}
+            <div className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-semibold">
+              <Lock className="w-3.5 h-3.5" />
+              <span>AES-256 Encrypted</span>
+            </div>
+
+            {/* SLA Pill */}
+            <div className="flex items-center gap-1.5 text-blue-400 text-[11px] font-semibold">
+              <Award className="w-3.5 h-3.5" />
+              <span>ISO 27001 Certified</span>
+            </div>
+
           </div>
+
         </div>
       </div>
     </footer>
   );
 }
+

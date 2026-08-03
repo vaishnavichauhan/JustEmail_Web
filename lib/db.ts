@@ -6,4 +6,5 @@ export const db = mysql.createPool({
     database: process.env.MYSQL_DATABASE || "justemails_db",
     waitForConnections: true,
     connectionLimit: 10,
+    connectTimeout: 2000,
 });

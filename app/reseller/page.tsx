@@ -186,7 +186,7 @@ export default function ResellerPage() {
             <div className="text-center mb-8">
               <Link href="/" className="inline-block bg-white px-5 py-2.5 rounded-2xl shadow-xl hover:scale-105 transition-transform border border-gray-200">
                 <Image
-                  src="/images/justemail-logo.png"
+                  src="/images/logo1.svg"
                   alt="Justemail Logo"
                   width={160}
                   height={45}
@@ -203,12 +203,6 @@ export default function ResellerPage() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200"
             >
-              <div className="mb-6 p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900 space-y-1">
-                <div className="font-extrabold text-indigo-950">Preset Reseller Credentials:</div>
-                <div>ID: <span className="font-bold text-gray-900">{DEMO_RESELLER_ID}</span></div>
-                <div>Password: <span className="font-bold text-gray-900">{DEMO_RESELLER_PASS}</span></div>
-              </div>
-
               {errorMsg && (
                 <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -264,7 +258,7 @@ export default function ResellerPage() {
               <div className="px-2 py-1">
                 <Link href="/" className="inline-block bg-white px-3.5 py-1.5 rounded-xl shadow-md">
                   <Image
-                    src="/images/justemail-logo.png"
+                    src="/images/logo1.svg"
                     alt="Justemail Logo"
                     width={130}
                     height={35}

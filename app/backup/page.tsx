@@ -24,7 +24,7 @@ import {
   Zap,
   Layers,
   FolderArchive,
-  CloudCheck
+  Cloud
 } from "lucide-react";
 import Link from "next/link";
 
@@ -185,7 +185,7 @@ export default function BackupServicesPage() {
 
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <button
-                  onClick={() => handleOpenAuthModal("signup")}
+                  // onClick={() => handleOpenAuthModal("signup")}
                   className="w-full py-3.5 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
                 >
                   <span>Export Manual Backup Now</span>
@@ -238,7 +238,7 @@ export default function BackupServicesPage() {
 
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <button
-                  onClick={() => handleOpenAuthModal("signup")}
+                  // onClick={() => handleOpenAuthModal("signup")}
                   className="w-full py-3.5 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
                 >
                   <span>Enable Automated Cloud Protection</span>
@@ -401,7 +401,7 @@ export default function BackupServicesPage() {
             <p className="text-xs sm:text-sm text-slate-300 mt-1">Unlimited cloud storage, 1-click PST export, and AES-256 encryption.</p>
           </div>
           <button
-            onClick={() => handleOpenAuthModal("signup")}
+            // onClick={() => handleOpenAuthModal("signup")}
             className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-lg transition-all shrink-0 active:scale-95"
           >
             Deploy Email Backup Solution

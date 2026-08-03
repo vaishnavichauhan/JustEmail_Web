@@ -20,7 +20,7 @@ export interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (plan: Omit<CartItem, "userCount">, userCount?: number) => void;
+  addToCart: (plan: Omit<CartItem, "userCount" | "amountNumeric"> & { amountNumeric?: number }, userCount?: number) => void;
   removeFromCart: (planId: string) => void;
   updateQuantity: (planId: string, count: number) => void;
   clearCart: () => void;

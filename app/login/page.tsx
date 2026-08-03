@@ -126,7 +126,7 @@ export default function LoginPage() {
           <div className="relative z-10 space-y-6">
             <Link href="/" className="inline-block bg-white px-4 py-2 rounded-xl shadow-md hover:scale-105 transition-transform">
               <Image
-                src="/images/justemail-logo.png"
+                src="/images/logo1.svg"
                 alt="Justemail Logo"
                 width={140}
                 height={40}
@@ -221,7 +221,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@yourcompany.com"
+                    placeholder="Enater Your Email"
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white transition-all shadow-xs"
                   />
                 </div>
@@ -233,9 +233,9 @@ export default function LoginPage() {
                   <label className="block text-xs font-extrabold text-gray-700 uppercase">
                     Password
                   </label>
-                  <span className="text-[11px] font-extrabold text-blue-600 hover:underline cursor-pointer">
+                  {/* <span className="text-[11px] font-extrabold text-blue-600 hover:underline cursor-pointer">
                     Forgot Password?
-                  </span>
+                  </span> */}
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />

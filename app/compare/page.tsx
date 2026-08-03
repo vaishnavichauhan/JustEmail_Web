@@ -7,16 +7,16 @@ import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/Footer";
 import { useCompare } from "@/lib/compareContext";
 import { useCart } from "@/lib/cartContext";
-import { 
-  SlidersHorizontal, 
-  Trash2, 
-  ArrowLeft, 
-  ArrowRight, 
-  Check, 
-  X, 
-  HardDrive, 
-  Zap, 
-  ShieldCheck, 
+import {
+  SlidersHorizontal,
+  Trash2,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  X,
+  HardDrive,
+  Zap,
+  ShieldCheck,
   FileText,
   Lock
 } from "lucide-react";
@@ -46,7 +46,7 @@ export default function ComparePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <Link 
+              <Link
                 href="/business-emails#provider-plans"
                 className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors mb-3"
               >
@@ -78,10 +78,10 @@ export default function ComparePage() {
       {/* --- COMPARISON MATRIX CONTAINER --- */}
       <section className="py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           {selectedPlans.length === 0 ? (
             /* Empty State */
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-3xl p-12 border border-gray-200 shadow-sm text-center max-w-2xl mx-auto my-10"
@@ -108,7 +108,7 @@ export default function ComparePage() {
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/80">
                     <th className="p-6 text-left w-64 min-w-[240px] text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      Features / Specifications
+                      Provider Name
                     </th>
                     {selectedPlans.map((plan) => (
                       <th key={plan.id} className="p-6 text-left min-w-[260px] max-w-[320px] align-top relative">
@@ -119,102 +119,51 @@ export default function ComparePage() {
                         >
                           <X className="w-4 h-4" />
                         </button>
-                        
-                        <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center border border-gray-200 shadow-xs mb-3">
-                          <Image
-                            src={plan.logo}
-                            alt={plan.providerName}
-                            width={32}
-                            height={32}
-                            className="object-contain max-h-7 w-auto"
-                          />
-                        </div>
 
-                        <div className="text-xs font-semibold text-blue-600 mb-0.5">{plan.providerName}</div>
-                        <div className="text-xl font-extrabold text-gray-900 mb-2">{plan.planName}</div>
-                        
-                        <div className="text-2xl font-extrabold text-gray-900">
-                          {plan.price}
-                          <span className="text-xs text-gray-500 font-normal"> {plan.period}</span>
-                        </div>
+                        <div className="text-base font-extrabold text-gray-900 pr-6">{plan.providerName}</div>
                       </th>
                     ))}
                   </tr>
                 </thead>
 
                 <tbody className="divide-y divide-gray-100 text-xs font-medium text-gray-700">
-                  {/* Storage */}
+                  {/* Subtitle Row */}
+                  <tr>
+                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40">
+                      Plan Subtitle
+                    </td>
+                    {selectedPlans.map((plan) => (
+                      <td key={plan.id} className="p-6 font-semibold text-blue-700">
+                        {plan.subtitle || plan.planName}
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Mailbox Storage */}
                   <tr>
                     <td className="p-6 font-bold text-gray-900 bg-gray-50/40 flex items-center gap-2">
-                      <HardDrive className="w-4 h-4 text-blue-500 shrink-0" />
                       <span>Mailbox Storage</span>
                     </td>
                     {selectedPlans.map((plan) => (
-                      <td key={plan.id} className="p-6 font-bold text-gray-900">
+                      <td key={plan.id} className="p-6 font-extrabold text-gray-900">
                         {plan.storage}
                       </td>
                     ))}
                   </tr>
 
-                  {/* Attachment Limit */}
+                  {/* Plan Price Row */}
                   <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
-                      <span>Attachment Limit</span>
+                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40">
+                      Plan Price
                     </td>
                     {selectedPlans.map((plan) => (
-                      <td key={plan.id} className="p-6">
-                        {plan.attachment}
+                      <td key={plan.id} className="p-6 font-extrabold text-blue-600 text-sm">
+                        {plan.price} <span className="text-xs text-gray-500 font-normal">{plan.period}</span>
                       </td>
                     ))}
                   </tr>
 
-                  {/* SLA Uptime */}
-                  <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40 flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>Uptime SLA</span>
-                    </td>
-                    {selectedPlans.map((plan) => (
-                      <td key={plan.id} className="p-6 font-bold text-emerald-600">
-                        {plan.sla}
-                      </td>
-                    ))}
-                  </tr>
-
-                  {/* Security */}
-                  <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40 flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>Anti-Spam & Security</span>
-                    </td>
-                    {selectedPlans.map((plan) => (
-                      <td key={plan.id} className="p-6">
-                        <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
-                          <Check className="w-3.5 h-3.5" />
-                          Included
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-
-                  {/* Protocol Access */}
-                  <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40 flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-purple-500 shrink-0" />
-                      <span>POP3 / IMAP / Webmail</span>
-                    </td>
-                    {selectedPlans.map((plan) => (
-                      <td key={plan.id} className="p-6">
-                        <span className="inline-flex items-center gap-1.5 text-blue-700 font-semibold bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
-                          <Check className="w-3.5 h-3.5" />
-                          Supported
-                        </span>
-                      </td>
-                    ))}
-                  </tr>
-
-                  {/* Detailed Features List */}
+                  {/* Detailed Key Features List */}
                   <tr>
                     <td className="p-6 font-bold text-gray-900 bg-gray-50/40 align-top">
                       Included Key Features
@@ -233,20 +182,19 @@ export default function ComparePage() {
                     ))}
                   </tr>
 
-                  {/* Bottom Buy Action Row */}
+                  {/* Select Plan Action Row */}
                   <tr className="bg-gray-50/80">
                     <td className="p-6 font-bold text-gray-900">
-                      Action
+                      Select Plan
                     </td>
                     {selectedPlans.map((plan) => (
                       <td key={plan.id} className="p-6">
                         <Link
-                          href={`/checkout?plan=${plan.id}`}
-                          onClick={() => addToCart({ ...plan, amountNumeric: parseInt(plan.price.replace(/[^\d]/g, "")) || 99 }, 1)}
-                          className="w-full py-3 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
+                          href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName)}&plan=${encodeURIComponent(`${plan.subtitle || plan.planName} (${plan.price})`)}&providerId=${encodeURIComponent(plan.id)}`}
+                          className="w-full py-3 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center"
                         >
-                          <span>Buy Now</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <span>Enquiry Now</span>
+                          <ArrowRight className="w-3.5 h-3.5 text-blue-400" />
                         </Link>
                       </td>
                     ))}
