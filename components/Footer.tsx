@@ -136,13 +136,19 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <span className="text-slate-400">Privacy Policy</span>
+                <Link href="/privacy-policy" className="hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
               </li>
               <li>
-                <span className="text-slate-400">Terms of Service</span>
+                <Link href="/terms-of-service" className="hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
               </li>
               <li>
-                <span className="text-slate-400">99.9% SLA Guarantee</span>
+                <Link href="/acceptable-use-policy" className="hover:text-white transition-colors">
+                  Acceptable Use Policy
+                </Link>
               </li>
             </ul>
           </div>
