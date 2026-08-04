@@ -36,5 +36,26 @@ export async function initializeTables() {
       );
     `);
 
+  // 3. Create Providers Table
+  await db.query(`
+      CREATE TABLE IF NOT EXISTS providers (
+        id VARCHAR(100) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        subtitle VARCHAR(255) NOT NULL,
+        badge VARCHAR(255) NOT NULL,
+        price VARCHAR(100) NOT NULL,
+        period VARCHAR(100) NOT NULL,
+        billing_note VARCHAR(255) NOT NULL,
+        storage VARCHAR(100) NOT NULL,
+        uptime VARCHAR(100) NOT NULL,
+        recommended_users VARCHAR(100) NOT NULL,
+        logo_type VARCHAR(100) NOT NULL,
+        features JSON NOT NULL,
+        enabled BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+
   return { success: true, message: "Tables created in MySQL!" };
 }

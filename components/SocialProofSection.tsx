@@ -25,7 +25,7 @@ const techPartners = [
 const testimonials = [
   {
     id: 1,
-    name: "Rajesh Sharma",
+    name: "Neha Sharma",
     role: "Chief Technology Officer",
     company: "Nexus Logistics Pvt Ltd",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
@@ -228,9 +228,8 @@ export default function SocialProofSection() {
                   <button
                     key={i}
                     onClick={() => setActiveTestimonial(i)}
-                    className={`h-2.5 rounded-full transition-all duration-300 ${
-                      i === activeTestimonial ? "w-8 bg-blue-600" : "w-2.5 bg-gray-300"
-                    }`}
+                    className={`h-2.5 rounded-full transition-all duration-300 ${i === activeTestimonial ? "w-8 bg-blue-600" : "w-2.5 bg-gray-300"
+                      }`}
                   />
                 ))}
               </div>

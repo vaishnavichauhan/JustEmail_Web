@@ -129,7 +129,7 @@ export default function BusinessEmailsPage() {
               className="lg:col-span-5 flex items-center justify-center relative"
             >
               <Image
-                src="/images/business-email-3d.png"
+                src="/images/BusinessEmail.png"
                 alt="3D Business Email Infrastructure"
                 width={800}
                 height={600}

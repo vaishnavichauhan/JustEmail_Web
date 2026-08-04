@@ -89,7 +89,7 @@ export default function BusinessEmailsSection({
                 billingNote: p.billingNote || "Billed annually",
                 storage: p.storage,
                 uptime: p.uptime,
-                recommendedUsers: p.recommendedUsers || "1 - 100 Users",
+                recommendedUsers: p.recommendedUsers || "1 - 300 Users",
                 logoType: (p.logoType || "custom").toLowerCase() as any,
                 features: Array.isArray(p.features) ? p.features : [],
               }));
@@ -317,7 +317,7 @@ export default function BusinessEmailsSection({
                               <HardDrive className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                               <span>{card.storage}</span>
                             </div>
-                            
+
                             <div className="flex items-center gap-1.5 col-span-2">
                               <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                               <span>{card.recommendedUsers}</span>

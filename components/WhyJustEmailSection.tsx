@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { 
-  Headphones, 
-  RefreshCw, 
-  Settings, 
-  CheckCircle2, 
+import {
+  Headphones,
+  RefreshCw,
+  Settings,
+  CheckCircle2,
   Sparkles,
   Zap,
   ArrowRight,
@@ -51,12 +51,12 @@ const whyJePillars = [
 export default function WhyJustEmailSection() {
   return (
     <section id="why-je" className="py-20 bg-[#F8FAFC] border-t border-gray-200/80 relative overflow-hidden">
-      
+
       {/* Background Accent Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-extrabold uppercase tracking-wider mb-4 shadow-xs">
@@ -64,7 +64,7 @@ export default function WhyJustEmailSection() {
             <span>The Justemail Difference</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4 flex items-center justify-center gap-3">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium text-gray-900 tracking-tight mb-4 flex items-center justify-center gap-1  ">
             <span>Why</span>
             <Image
               src="/images/logo1.svg"
@@ -72,10 +72,10 @@ export default function WhyJustEmailSection() {
               width={220}
               height={60}
               priority
-              className="h-10 sm:h-12 md:h-14 w-auto object-contain"
+              className="h-10 sm:h-12 md:h-14 w-auto object-contain "
             />
           </h2>
-          
+
           <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
             Core pillars of our enterprise email management, migration support, and 24/7 technical administration.
           </p>

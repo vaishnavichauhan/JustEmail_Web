@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   Star,
-  ShieldCheck
+  ShieldCheck,
+  MailPlus,
+  Send,
+  Mail
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -155,24 +158,41 @@ export default function Hero({
                     src="/images/heroDashbord.png"
                     alt="justEmails 3D Mail Console Dashboard"
                     fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                     priority
                   />
                 </div>
               </div>
 
-              {/* Floating Badge Overlay */}
+              {/* Floating Top-Right Mail Icon Accent */}
+
+
+              {/* Floating Mid-Right Mail Icon Accent */}
+              <motion.div
+                animate={{ y: [0, -6, 0], scale: [1, 1.05, 1] }}
+                transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute top-1/2 -right-5 -translate-y-1/2 w-10 h-10 rounded-full bg-white text-blue-600 shadow-lg flex items-center justify-center border border-gray-200 hidden lg:flex z-20"
+              >
+                <Send className="w-5 h-5 text-blue-600" />
+              </motion.div>
+
+              {/* Floating Active Mail Icon Badge with justemail Text */}
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-6 -left-6 bg-white text-navyBlue p-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-200 hidden sm:flex"
+                className="absolute -bottom-6 -left-6 bg-[#0B1437] text-white p-2 px-4.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 hidden sm:flex z-20"
               >
-                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-glow">
-                  <ShieldCheck className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md relative shrink-0">
+                  <MailPlus className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0B1437] animate-ping" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0B1437]" />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 font-medium">Enterprise Security</div>
-                  <div className="text-sm font-bold text-navyBlue">AES-256 Encrypted</div>
+                  <div className="text-sm font-black text-white tracking-tight flex items-center gap-1.5">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-indigo-300 font-extrabold">justemail</span>
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-blue-300">Active Console</div>
                 </div>
               </motion.div>
 
