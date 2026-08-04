@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { ProviderModel, defaultProviders } from "@/lib/models/providerModel";
+import { ProviderModel } from "@/lib/models/providerModel";
 
 export async function GET() {
   try {
     const providers = await ProviderModel.findAll();
     return NextResponse.json({ success: true, data: providers });
-  } catch (error) {
+  } catch (error: any) {
     console.error("GET /api/providers Error:", error);
-    return NextResponse.json({ success: true, data: defaultProviders });
+    return NextResponse.json(
+      { error: "Failed to fetch providers", details: error?.message || error },
+      { status: 500 }
+    );
   }
 }
 
@@ -34,6 +37,24 @@ export async function POST(req: Request) {
     if (!name || !price) {
       return NextResponse.json(
         { error: "Provider name and price are required." },
+        { status: 400 }
+      );
+    }
+
+    const cleanNumericPrice = String(price).replace(/[^\d.]/g, "").trim();
+    const priceRegex = /^\d+(\.\d{1,2})?$/;
+    const numericPriceVal = parseFloat(cleanNumericPrice);
+
+    if (!cleanNumericPrice || !priceRegex.test(cleanNumericPrice) || isNaN(numericPriceVal)) {
+      return NextResponse.json(
+        { error: "Price must be a valid numeric value (e.g. 100 or 150.50)." },
+        { status: 400 }
+      );
+    }
+
+    if (numericPriceVal < 1) {
+      return NextResponse.json(
+        { error: "Price cannot be less than ₹1. Minimum allowed price is ₹1." },
         { status: 400 }
       );
     }

@@ -123,8 +123,8 @@ export default function ProviderComparisonTable() {
         
         {/* Section Title */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-800 border border-blue-100 text-xs font-extrabold uppercase tracking-wider mb-4 shadow-xs">
-            <Award className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#0B1437] via-[#14214D] to-[#0B1437] text-blue-200 border border-blue-400/30 text-xs font-extrabold uppercase tracking-wider mb-4 shadow-sm">
+            <Award className="w-3.5 h-3.5 text-blue-400" />
             <span>Head-to-Head Provider Comparison</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-3">
@@ -150,22 +150,22 @@ export default function ProviderComparisonTable() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-3xl border border-gray-200 shadow-lg bg-[#F8FAFC]">
+          <div className="overflow-x-auto rounded-3xl border border-gray-200 shadow-xl bg-white">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
-                <tr className="bg-[#0B1437] text-white text-xs font-extrabold uppercase tracking-wider">
-                  <th className="p-6">Provider</th>
-                  <th className="p-6">Plan Subtitle</th>
-                  <th className="p-6">Starting Price</th>
-                  <th className="p-6">Storage Quota</th>
-                  <th className="p-6">Best For</th>
-                  <th className="p-6 text-center">Action</th>
+                <tr className="bg-gradient-to-r from-[#0B1437] via-[#14214D] to-[#0B1437] text-white text-xs font-extrabold uppercase tracking-wider border-b border-slate-800">
+                  <th className="p-6 text-blue-200">Provider</th>
+                  <th className="p-6 text-blue-200">Plan Subtitle</th>
+                  <th className="p-6 text-blue-200">Starting Price</th>
+                  <th className="p-6 text-blue-200">Storage Quota</th>
+                  <th className="p-6 text-blue-200">Best For</th>
+                  <th className="p-6 text-center text-blue-200">Action</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-gray-200/80 text-xs font-semibold text-gray-800">
                 {providers.map((p, idx) => (
-                  <tr key={`${p.name}-${idx}`} className="hover:bg-white transition-colors">
+                  <tr key={`${p.name}-${idx}`} className="hover:bg-slate-50/60 transition-colors">
                     
                     {/* Provider Name & Logo */}
                     <td className="p-6">
@@ -178,12 +178,12 @@ export default function ProviderComparisonTable() {
                     </td>
 
                     {/* Plan Subtitle */}
-                    <td className="p-6 font-semibold text-blue-700">
+                    <td className="p-6 font-bold text-blue-800">
                       {p.subtitle}
                     </td>
 
                     {/* Price */}
-                    <td className="p-6 font-extrabold text-blue-600 text-sm">
+                    <td className="p-6 font-extrabold text-[#0B1437] text-base">
                       {p.startingPrice}
                     </td>
 
@@ -201,10 +201,10 @@ export default function ProviderComparisonTable() {
                     <td className="p-6 text-center">
                       <Link
                         href={`/business-emails/${p.slug}`}
-                        className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs transition-all shadow-sm inline-flex items-center gap-1 shrink-0"
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0B1437] via-[#1A2859] to-[#0B1437] hover:from-[#1A2859] hover:to-[#0B1437] text-white font-extrabold text-xs transition-all duration-300 shadow-md hover:shadow-lg border border-slate-700/50 inline-flex items-center gap-1.5 shrink-0 active:scale-95"
                       >
                         <span>View Plans</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </td>
 

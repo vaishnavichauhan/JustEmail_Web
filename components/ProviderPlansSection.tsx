@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Check, 
-  ArrowRight, 
-  HardDrive, 
-  Zap, 
-  SlidersHorizontal, 
-  CheckSquare, 
+import {
+  Check,
+  ArrowRight,
+  HardDrive,
+  Zap,
+  SlidersHorizontal,
+  CheckSquare,
   Square,
   Sparkles,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -68,27 +70,27 @@ export default function ProviderPlansSection({
                 groupKey === "google"
                   ? "/images/google-workspace.png"
                   : groupKey === "microsoft"
-                  ? "/images/microsoft-365.png"
-                  : groupKey === "zoho"
-                  ? "/images/zoho-mail.png"
-                  : groupKey === "rediff"
-                  ? "/images/rediffmail.png"
-                  : groupKey === "titan"
-                  ? "/images/titan-mail.png"
-                  : "/images/logo1.svg";
+                    ? "/images/microsoft-365.png"
+                    : groupKey === "zoho"
+                      ? "/images/zoho-mail.png"
+                      : groupKey === "rediff"
+                        ? "/images/rediffmail.png"
+                        : groupKey === "titan"
+                          ? "/images/titan-mail.png"
+                          : "/images/logo1.svg";
 
               const providerDisplayName =
                 groupKey === "google"
                   ? "Google Workspace"
                   : groupKey === "microsoft"
-                  ? "Microsoft 365"
-                  : groupKey === "zoho"
-                  ? "Zoho Mail"
-                  : groupKey === "rediff"
-                  ? "Rediffmail Pro"
-                  : groupKey === "titan"
-                  ? "Titan Mail"
-                  : p.name;
+                    ? "Microsoft 365"
+                    : groupKey === "zoho"
+                      ? "Zoho Mail"
+                      : groupKey === "rediff"
+                        ? "Rediffmail Pro"
+                        : groupKey === "titan"
+                          ? "Titan Mail"
+                          : p.name;
 
               if (!newTabsMap.has(groupKey)) {
                 newTabsMap.set(groupKey, {
@@ -157,12 +159,55 @@ export default function ProviderPlansSection({
     };
   }, []);
 
+  const planCarouselRef = useRef<HTMLDivElement>(null);
   const currentPlans = plansData[selectedProviderTab] || plansData["google"] || [];
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = () => {
+    if (planCarouselRef.current) {
+      const container = planCarouselRef.current;
+      const index = Math.round(container.scrollLeft / 360);
+      setActiveIndex(index);
+    }
+  };
+
+  const handleScrollLeft = () => {
+    if (planCarouselRef.current) {
+      planCarouselRef.current.scrollBy({ left: -360, behavior: "smooth" });
+    }
+  };
+
+  const handleScrollRight = () => {
+    if (planCarouselRef.current) {
+      planCarouselRef.current.scrollBy({ left: 360, behavior: "smooth" });
+    }
+  };
+
+  // Auto-scroll when more than 3 provider plans exist
+  useEffect(() => {
+    if (!currentPlans || currentPlans.length <= 3 || isCarouselPaused) return;
+
+    const interval = setInterval(() => {
+      if (planCarouselRef.current) {
+        const container = planCarouselRef.current;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        if (container.scrollLeft >= maxScrollLeft - 10) {
+          container.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          container.scrollBy({ left: 360, behavior: "smooth" });
+        }
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [currentPlans, isCarouselPaused]);
+
 
   return (
     <section id="provider-plans" className="py-16 bg-[#F8FAFC]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-10">
           <span className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
@@ -185,11 +230,10 @@ export default function ProviderPlansSection({
                 <button
                   key={tab.id}
                   onClick={() => setSelectedProviderTab(tab.id)}
-                  className={`flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all shrink-0 ${
-                    isSelected 
-                      ? "bg-[#0B1437] text-white border-[#0B1437] shadow-lg scale-[1.02]" 
-                      : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-2xs"
-                  }`}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all shrink-0 ${isSelected
+                    ? "bg-[#0B1437] text-white border-[#0B1437] shadow-lg scale-[1.02]"
+                    : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-2xs"
+                    }`}
                 >
                   <div className="w-8 h-8 rounded-xl bg-white p-1 flex items-center justify-center shrink-0 border border-gray-100 shadow-xs">
                     <Image
@@ -212,7 +256,7 @@ export default function ProviderPlansSection({
           </div>
         </div>
 
-        {/* --- PLAN CARDS DISPLAY GRID --- */}
+        {/* --- PLAN CARDS CAROUSEL --- */}
         {loading ? (
           <div className="p-12 text-center bg-white border border-gray-200 rounded-3xl shadow-sm space-y-3 max-w-xl mx-auto my-6">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
@@ -227,137 +271,178 @@ export default function ProviderPlansSection({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            <AnimatePresence mode="popLayout">
-              {currentPlans.map((plan, idx) => {
-                const isChecked = isPlanSelected(plan.id);
-                const isFeaturedCard = idx === 1 || currentPlans.length === 1;
+          <div className="relative">
+            {/* Carousel Navigation Arrow Buttons */}
+            {currentPlans.length > 0 && (
+              <div className="flex items-center justify-end gap-3 mb-6">
+                <button
+                  onClick={handleScrollLeft}
+                  className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all active:scale-95"
+                  aria-label="Previous plan"
+                  title="Previous Plan"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleScrollRight}
+                  className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all active:scale-95"
+                  aria-label="Next plan"
+                  title="Next Plan"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
 
-                return (
-                  <motion.div
-                    key={plan.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3, delay: idx * 0.08 }}
-                    className={`rounded-2xl p-7 md:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
-                      isFeaturedCard 
-                        ? "bg-[#0B1437] text-white shadow-2xl border border-slate-800 z-10" 
+            <div
+              ref={planCarouselRef}
+              onScroll={handleScroll}
+              onMouseEnter={() => setIsCarouselPaused(true)}
+              onMouseLeave={() => setIsCarouselPaused(false)}
+              className="flex items-stretch gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar py-4 px-1"
+            >
+              <AnimatePresence mode="popLayout">
+                {currentPlans.map((plan, idx) => {
+                  const isChecked = isPlanSelected(plan.id);
+                  const isFeaturedCard = idx === 1 || currentPlans.length === 1;
+
+                  return (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, delay: idx * 0.08 }}
+                      className={`snap-start shrink-0 w-[300px] sm:w-[340px] md:w-[370px] rounded-2xl p-7 md:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${isFeaturedCard
+                        ? "bg-[#0B1437] text-white shadow-2xl border border-slate-800 scale-[1.01] z-10"
                         : "bg-white text-gray-900 shadow-md hover:shadow-xl border border-gray-200 z-10"
-                    }`}
-                  >
-                    <div>
-                      {/* Top Bar: Logo & COMPARE BUTTON IN TOP RIGHT CORNER */}
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="w-11 h-11 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center p-2 overflow-hidden">
-                          <Image
-                            src={plan.logo}
-                            alt={plan.providerName}
-                            width={36}
-                            height={36}
-                            className="object-contain max-h-7 w-auto"
-                          />
-                        </div>
+                        }`}
+                    >
+                      <div>
+                        {/* Top Bar: Logo & COMPARE BUTTON IN TOP RIGHT CORNER */}
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="w-11 h-11 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center p-2 overflow-hidden">
+                            <Image
+                              src={plan.logo}
+                              alt={plan.providerName}
+                              width={36}
+                              height={36}
+                              className="object-contain max-h-7 w-auto"
+                            />
+                          </div>
 
-                        {/* COMPARE BUTTON IN TOP RIGHT CORNER */}
-                        <button
-                          onClick={() => toggleComparePlan(plan)}
-                          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-300 shadow-xs border active:scale-95 ${
-                            isChecked 
-                              ? "bg-blue-600 text-white border-blue-500 shadow-md" 
-                              : isFeaturedCard 
-                                ? "bg-white/10 text-white border-white/20 hover:bg-white/20" 
+                          {/* COMPARE BUTTON IN TOP RIGHT CORNER */}
+                          <button
+                            onClick={() => toggleComparePlan(plan)}
+                            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-300 shadow-xs border active:scale-95 ${isChecked
+                              ? "bg-blue-600 text-white border-blue-500 shadow-md"
+                              : isFeaturedCard
+                                ? "bg-white/10 text-white border-white/20 hover:bg-white/20"
                                 : "bg-[#0B1437] text-white border-[#0B1437] hover:bg-black"
-                          }`}
-                          title="Compare this plan"
-                        >
-                          <SlidersHorizontal className="w-3.5 h-3.5" />
-                          <span>{isChecked ? "Selected" : "Compare"}</span>
-                        </button>
-                      </div>
+                              }`}
+                            title="Compare this plan"
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                            <span>{isChecked ? "Selected" : "Compare"}</span>
+                          </button>
+                        </div>
 
-                      {/* Plan Names */}
-                      <h3 className={`text-2xl font-extrabold tracking-tight mb-1 ${isFeaturedCard ? "text-white" : "text-gray-900"}`}>
-                        {plan.planName}
-                      </h3>
-                      <div className="mb-4">
-                        <Link 
-                          href={`/business-emails/${plan.providerId}`}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold transition-all shadow-xs border ${
-                            isFeaturedCard 
-                              ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/30 hover:text-white" 
+                        {/* Plan Names */}
+                        <h3 className={`text-2xl font-extrabold tracking-tight mb-1 ${isFeaturedCard ? "text-white" : "text-gray-900"}`}>
+                          {plan.planName}
+                        </h3>
+                        <div className="mb-4">
+                          <Link
+                            href={`/business-emails/${plan.providerId}`}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold transition-all shadow-xs border ${isFeaturedCard
+                              ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/30 hover:text-white"
                               : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
-                          }`}
-                        >
-                          <span>Explore {plan.providerName} Page</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-
-                      {/* Spec Chips Bar */}
-                      <div className={`grid grid-cols-2 gap-2 p-3 rounded-xl mb-6 text-[11px] font-semibold ${
-                        isFeaturedCard ? "bg-[#14214D] text-gray-200 border border-slate-700" : "bg-slate-50 text-gray-700 border border-gray-100"
-                      }`}>
-                        <div className="flex items-center gap-1.5">
-                          <HardDrive className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                          <span>{plan.storage}</span>
+                              }`}
+                          >
+                            <span>Explore {plan.providerName} Page</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                          <span>{plan.sla}</span>
-                        </div>
-                      </div>
 
-                      {/* Features List */}
-                      <div className="space-y-3 mb-8">
-                        {plan.features.map((feature, fIdx) => (
-                          <div key={fIdx} className="flex items-start gap-2.5">
-                            <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${
-                              isFeaturedCard ? "bg-[#1E2A56] text-blue-300" : "bg-[#D8E6FF] text-[#2563EB]"
-                            }`}>
-                              <Check className="w-3 h-3 stroke-[2.5]" />
+                        {/* Spec Chips Bar */}
+                        <div className={`grid grid-cols-2 gap-2 p-3 rounded-xl mb-6 text-[11px] font-semibold ${isFeaturedCard ? "bg-[#14214D] text-gray-200 border border-slate-700" : "bg-slate-50 text-gray-700 border border-gray-100"
+                          }`}>
+                          <div className="flex items-center gap-1.5">
+                            <HardDrive className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                            <span>{plan.storage}</span>
+                          </div>
+                        </div>
+
+                        {/* Features List */}
+                        <div className="space-y-3 mb-8">
+                          {plan.features.map((feature, fIdx) => (
+                            <div key={fIdx} className="flex items-start gap-2.5">
+                              <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 mt-0.5 ${isFeaturedCard ? "bg-[#1E2A56] text-blue-300" : "bg-[#D8E6FF] text-[#2563EB]"
+                                }`}>
+                                <Check className="w-3 h-3 stroke-[2.5]" />
+                              </div>
+                              <span className={`text-xs font-medium leading-relaxed ${isFeaturedCard ? "text-gray-200" : "text-gray-700"}`}>
+                                {feature}
+                              </span>
                             </div>
-                            <span className={`text-xs font-medium leading-relaxed ${isFeaturedCard ? "text-gray-200" : "text-gray-700"}`}>
-                              {feature}
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom Row: Price & BUY NOW Button */}
+                      <div className={`pt-5 flex items-center justify-between border-t ${isFeaturedCard ? "border-slate-800" : "border-gray-100"
+                        }`}>
+                        <div>
+                          <div className={`text-2xl font-extrabold tracking-tight ${isFeaturedCard ? "text-white" : "text-gray-900"}`}>
+                            {plan.price}
+                            <span className={`text-xs font-medium ml-1 ${isFeaturedCard ? "text-gray-400" : "text-gray-500"}`}>
+                              {plan.period}
                             </span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Bottom Row: Price & BUY NOW Button */}
-                    <div className={`pt-5 flex items-center justify-between border-t ${
-                      isFeaturedCard ? "border-slate-800" : "border-gray-100"
-                    }`}>
-                      <div>
-                        <div className={`text-2xl font-extrabold tracking-tight ${isFeaturedCard ? "text-white" : "text-gray-900"}`}>
-                          {plan.price}
-                          <span className={`text-xs font-medium ml-1 ${isFeaturedCard ? "text-gray-400" : "text-gray-500"}`}>
-                            {plan.period}
-                          </span>
+                          <div className={`text-[10px] font-normal mt-0.5 ${isFeaturedCard ? "text-gray-400" : "text-gray-500"}`}>
+                            Billed annually
+                          </div>
                         </div>
-                        <div className={`text-[10px] font-normal mt-0.5 ${isFeaturedCard ? "text-gray-400" : "text-gray-500"}`}>
-                          Billed annually
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName || plan.providerId || "")}&plan=${encodeURIComponent(`${plan.planName || ""} (${plan.price || ""})`)}&providerId=${encodeURIComponent(plan.id || "")}`}
-                          className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-300 border ${
-                            isFeaturedCard
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName || plan.providerId || "")}&plan=${encodeURIComponent(`${plan.planName || ""} (${plan.price || ""})`)}&providerId=${encodeURIComponent(plan.id || "")}`}
+                            className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-300 border ${isFeaturedCard
                               ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/40 hover:text-white"
                               : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
-                          }`}
-                        >
-                          <span>Enquiry now</span>
-                        </Link>
+                              }`}
+                          >
+                            <span>Enquiry now</span>
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+
+            {/* Fully Rounded Scroll Indicators */}
+            {!loading && currentPlans.length > 3 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                {currentPlans.map((_, dotIdx) => (
+                  <button
+                    key={dotIdx}
+                    onClick={() => {
+                      if (planCarouselRef.current) {
+                        planCarouselRef.current.scrollTo({ left: dotIdx * 360, behavior: "smooth" });
+                        setActiveIndex(dotIdx);
+                      }
+                    }}
+                    className={`h-2.5 rounded-full transition-all duration-300 ${activeIndex === dotIdx
+                        ? "w-8 bg-blue-600 shadow-sm"
+                        : "w-2.5 bg-gray-300 hover:bg-gray-400"
+                      }`}
+                    aria-label={`Go to plan ${dotIdx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
