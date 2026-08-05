@@ -109,7 +109,7 @@ export default function ResellerPage() {
     { id: "1", company: "Apex IT Solutions", contact: "Rohan Varma", provider: "Google Workspace", mailboxes: 15, retailPrice: "₹180 / user / mo", status: "Active" },
     { id: "2", company: "Bright Media Agency", contact: "Kavita Shah", provider: "Microsoft 365", mailboxes: 25, retailPrice: "₹165 / user / mo", status: "Active" },
     { id: "3", company: "Cloud Matrix Tech", contact: "Siddharth N.", provider: "Cross-Tenant Split", mailboxes: 40, retailPrice: "₹210 / user / mo", status: "Active" },
-    { id: "4", company: "Delta Logistics", contact: "Manish Kumar", provider: "Zoho Mail", mailboxes: 10, retailPrice: "₹75 / user / mo", status: "Suspended" },
+    { id: "4", company: "Delta Logistics", contact: "Manish Kumar", provider: "Rediffmail Pro", mailboxes: 10, retailPrice: "₹75 / user / mo", status: "Suspended" },
   ]);
 
   const [myOrders, setMyOrders] = useState<ResellerOrder[]>([
@@ -121,7 +121,7 @@ export default function ResellerPage() {
   const [myPlans, setMyPlans] = useState<ResellerPlan[]>([
     { id: "1", provider: "Google Workspace", planName: "Business Starter", wholesaleCost: "₹120 / mo", retailPrice: "₹180 / mo", profitMargin: "₹60 / seat (50% Margin)" },
     { id: "2", provider: "Microsoft 365", planName: "Business Basic", wholesaleCost: "₹115 / mo", retailPrice: "₹165 / mo", profitMargin: "₹50 / seat (43% Margin)" },
-    { id: "3", provider: "Zoho Mail", planName: "Mail Lite", wholesaleCost: "₹40 / mo", retailPrice: "₹75 / mo", profitMargin: "₹35 / seat (87% Margin)" },
+    { id: "3", provider: "Rediffmail Pro", planName: "Corporate Standard", wholesaleCost: "₹40 / mo", retailPrice: "₹75 / mo", profitMargin: "₹35 / seat (87% Margin)" },
     { id: "4", provider: "Titan Mail", planName: "Business Premium", wholesaleCost: "₹60 / mo", retailPrice: "₹110 / mo", profitMargin: "₹50 / seat (83% Margin)" },
   ]);
 
@@ -381,7 +381,7 @@ export default function ResellerPage() {
                         </div>
                       </div>
                       <div className="text-3xl font-black text-gray-900">180</div>
-                      <div className="text-[11px] text-indigo-600 font-semibold">Google, Microsoft, Zoho Seats</div>
+                      <div className="text-[11px] text-indigo-600 font-semibold">Google, Microsoft, Titan Seats</div>
                     </div>
 
                     {/* Total Reseller Profit */}

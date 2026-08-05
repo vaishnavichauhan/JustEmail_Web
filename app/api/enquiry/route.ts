@@ -24,53 +24,31 @@ export async function POST(req: Request) {
       userCount,
     } = body;
 
+    const emailLower = (email || "").trim().toLowerCase();
+    const altEmailLower = (alternativeEmail || email || "").trim().toLowerCase();
+    const firstNameFinal = firstName?.trim() || "Customer";
+    const lastNameFinal = lastName?.trim() || "";
+    const orgNameFinal = organizationName?.trim() || "Direct Web Enquiry";
+    const domainFinal = domain?.trim() || (emailLower.includes("@") ? emailLower.split("@")[1] : "N/A");
+    const cityFinal = city?.trim() || "N/A";
+    const stateFinal = state?.trim() || "N/A";
+    const zipFinal = zip?.trim() || "000000";
+
     // 1. Mandatory Fields Check
     if (
-      !organizationName?.trim() ||
-      !domain?.trim() ||
-      !city?.trim() ||
-      !state?.trim() ||
-      !zip?.trim() ||
-      !firstName?.trim() ||
-      !lastName?.trim() ||
-      !email?.trim() ||
-      !alternativeEmail?.trim() ||
+      !emailLower ||
       !phoneNumber?.trim()
     ) {
       return NextResponse.json(
-        { error: "Please provide all required fields." },
+        { error: "Email and Phone Number are required fields." },
         { status: 400 }
       );
     }
 
-    // 2. Validate 10-Digit Numeric Phone Number
-    const cleanPhone = String(phoneNumber).replace(/\D/g, "");
+    const cleanPhone = String(phoneNumber || "").replace(/\D/g, "");
     if (cleanPhone.length !== 10) {
       return NextResponse.json(
         { error: "Phone number must be exactly 10 numeric digits." },
-        { status: 400 }
-      );
-    }
-
-    // 3. Validate Primary & Alternative Email Are Not Identical
-    const emailLower = email.trim().toLowerCase();
-    const altEmailLower = alternativeEmail.trim().toLowerCase();
-
-    if (emailLower === altEmailLower) {
-      return NextResponse.json(
-        { error: "Primary Email and Alternative Email cannot be the same." },
-        { status: 400 }
-      );
-    }
-
-    // 4. Validate Notes Word Count (Max 200 Words)
-    const wordCount = notes
-      ? notes.trim().split(/\s+/).filter(Boolean).length
-      : 0;
-
-    if (wordCount > 200) {
-      return NextResponse.json(
-        { error: "Notes must not exceed 200 words limit." },
         { status: 400 }
       );
     }
@@ -84,14 +62,14 @@ export async function POST(req: Request) {
     try {
       insertedId = await EnquiryModel.create({
         enquiryId,
-        organizationName: organizationName.trim(),
-        domain: domain.trim(),
-        city: city.trim(),
-        state: state.trim(),
-        zip: zip.trim(),
+        organizationName: orgNameFinal,
+        domain: domainFinal,
+        city: cityFinal,
+        state: stateFinal,
+        zip: zipFinal,
         address: address?.trim() || "",
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        firstName: firstNameFinal,
+        lastName: lastNameFinal,
         email: emailLower,
         alternativeEmail: altEmailLower,
         phoneNumber: formattedPhone,
@@ -101,9 +79,9 @@ export async function POST(req: Request) {
         providerId: providerId || null,
         userCount: Number(userCount) || 1,
       });
-      console.log(`Successfully saved enquiry to MySQL database! Row ID: ${insertedId}`);
+      console.log(`Successfully saved enquiry to database! Reference ID: ${enquiryId}`);
     } catch (dbError) {
-      console.error("MySQL Database Insert Error:", dbError);
+      console.error("Database Insert Error:", dbError);
     }
 
     // 7. Return 200 OK Response
@@ -115,14 +93,14 @@ export async function POST(req: Request) {
         dbRowId: insertedId,
         data: {
           enquiryId,
-          organizationName: organizationName.trim(),
-          domain: domain.trim(),
-          city: city.trim(),
-          state: state.trim(),
-          zip: zip.trim(),
+          organizationName: orgNameFinal,
+          domain: domainFinal,
+          city: cityFinal,
+          state: stateFinal,
+          zip: zipFinal,
           address: address?.trim() || "",
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
+          firstName: firstNameFinal,
+          lastName: lastNameFinal,
           email: emailLower,
           alternativeEmail: altEmailLower,
           phoneNumber: formattedPhone,

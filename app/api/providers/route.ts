@@ -31,7 +31,8 @@ export async function POST(req: Request) {
       recommendedUsers,
       logoType,
       features,
-      enabled
+      enabled,
+      showOnHome
     } = body;
 
     if (!name || !price) {
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
       logoType: group,
       features: Array.isArray(features) ? features : typeof features === "string" ? features.split("\n").map(s => s.trim()).filter(Boolean) : [],
       enabled: enabled !== undefined ? Boolean(enabled) : true,
+      showOnHome: showOnHome !== undefined ? Boolean(showOnHome) : true,
     };
 
     await ProviderModel.create(newProvider);

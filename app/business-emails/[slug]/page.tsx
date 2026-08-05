@@ -150,49 +150,6 @@ const singleProviderData: Record<string, ProviderData> = {
       }
     ]
   },
-  "zoho-mail": {
-    slug: "zoho-mail",
-    name: "Zoho Mail",
-    badge: "Official Zoho Premium Partner",
-    heroHeadline: "Ultra-Fast, Secure & Ad-Free Business Email Hosting",
-    heroSubtitle: "Get high-performance custom domain email hosting with 5 GB to 50 GB NVMe storage, zero-ads interface, and integrated Zoho Suite.",
-    logo: "/images/zoho-mail.png",
-    sla: "99.9% SLA",
-    maxStorage: "Up to 50 GB",
-    plans: [],
-    whyChoose: [
-      {
-        title: "100% Privacy & Zero-Ads Guarantee",
-        description: "Zoho Mail respects user data privacy and never scans or sells your business emails for advertising.",
-        icon: "shield"
-      },
-      {
-        title: "1 GB Huge Attachment Limit",
-        description: "Send massive files, design blueprints, and datasets up to 1 GB directly via email on Premium plans.",
-        icon: "zap"
-      },
-      {
-        title: "Integrated Zoho CRM & Workplace",
-        description: "Connect your inbox directly with Zoho CRM, Projects, Cliq chat, and Zoho Docs without extra setup.",
-        icon: "globe"
-      },
-      {
-        title: "Cost-Effective Pricing",
-        description: "Enterprise-grade email infrastructure starting at just ₹58/month, providing maximum ROI for businesses.",
-        icon: "check"
-      }
-    ],
-    faqs: [
-      {
-        question: "Is Zoho Mail suitable for small businesses?",
-        answer: "Yes! Zoho Mail is one of the most popular and affordable business email solutions in the world, ideal for teams from 1 to 10,000+ users."
-      },
-      {
-        question: "Can I access Zoho Mail on mobile devices?",
-        answer: "Yes, Zoho Mail provides dedicated native mobile apps for iOS and Android, as well as IMAP/POP3 access for Outlook and Apple Mail."
-      }
-    ]
-  },
   "rediffmail-pro": {
     slug: "rediffmail-pro",
     name: "Rediffmail Pro",
@@ -272,8 +229,6 @@ const slugAliases: Record<string, string> = {
   "google-workspace": "google-workspace",
   "microsoft": "microsoft-365",
   "microsoft-365": "microsoft-365",
-  "zoho": "zoho-mail",
-  "zoho-mail": "zoho-mail",
   "rediff": "rediffmail-pro",
   "rediffmail": "rediffmail-pro",
   "rediffmail-pro": "rediffmail-pro",

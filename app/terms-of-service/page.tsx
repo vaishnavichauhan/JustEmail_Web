@@ -154,7 +154,7 @@ export default function TermsOfServicePage() {
                 By creating an account, ordering services, or provisioning mailboxes on Justemail Technologies ("Justemail", "we", "us"), you ("Customer", "Client", or "User") agree to be bound by these Terms of Service, along with our <Link href="/privacy-policy" className="text-blue-600 font-semibold underline">Privacy Policy</Link> and <Link href="/acceptable-use-policy" className="text-blue-600 font-semibold underline">Acceptable Use Policy</Link>.
               </p>
               <p>
-                Justemail provides business email provisioning, custom MX domain delegation, split-domain routing (Google Workspace, Microsoft 365, Zoho coexistence), cloud mail archiving, and domain registration services.
+                Justemail provides business email provisioning, custom MX domain delegation, split-domain routing (Google Workspace, Microsoft 365 coexistence), cloud mail archiving, and domain registration services.
               </p>
             </section>
 

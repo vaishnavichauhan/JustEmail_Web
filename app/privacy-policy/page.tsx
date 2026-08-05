@@ -214,7 +214,7 @@ export default function PrivacyPolicyPage() {
               <ul className="space-y-2.5 text-xs text-slate-700">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span><strong>Mail Routing & Delivery:</strong> Facilitating seamless business email transmission across primary servers and split-domain coexistence providers (Google Workspace, Microsoft 365, Zoho).</span>
+                  <span><strong>Mail Routing & Delivery:</strong> Facilitating seamless business email transmission across primary servers and split-domain coexistence providers (Google Workspace, Microsoft 365).</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />

@@ -31,7 +31,6 @@ interface ProviderTab {
 const providerTabs: ProviderTab[] = [
   { id: "google", name: "Google Workspace", logo: "/images/google-workspace.png", badge: "Best Google Suite" },
   { id: "microsoft", name: "Microsoft 365", logo: "/images/microsoft-365.png", badge: "Best Outlook Suite" },
-  { id: "zoho", name: "Zoho Mail", logo: "/images/zoho-mail.png", badge: "Best Budget Option" },
   { id: "rediff", name: "Rediffmail Pro", logo: "/images/rediffmail.png", badge: "Indian Data Sovereignty" },
   { id: "titan", name: "Titan Mail", logo: "/images/titan-mail.png", badge: "Built for Productivity" }
 ];
@@ -71,26 +70,22 @@ export default function ProviderPlansSection({
                   ? "/images/google-workspace.png"
                   : groupKey === "microsoft"
                     ? "/images/microsoft-365.png"
-                    : groupKey === "zoho"
-                      ? "/images/zoho-mail.png"
-                      : groupKey === "rediff"
-                        ? "/images/rediffmail.png"
-                        : groupKey === "titan"
-                          ? "/images/titan-mail.png"
-                          : "/images/logo1.svg";
+                    : groupKey === "rediff"
+                      ? "/images/rediffmail.png"
+                      : groupKey === "titan"
+                        ? "/images/titan-mail.png"
+                        : "/images/logo1.svg";
 
               const providerDisplayName =
                 groupKey === "google"
                   ? "Google Workspace"
                   : groupKey === "microsoft"
                     ? "Microsoft 365"
-                    : groupKey === "zoho"
-                      ? "Zoho Mail"
-                      : groupKey === "rediff"
-                        ? "Rediffmail Pro"
-                        : groupKey === "titan"
-                          ? "Titan Mail"
-                          : p.name;
+                    : groupKey === "rediff"
+                      ? "Rediffmail Pro"
+                      : groupKey === "titan"
+                        ? "Titan Mail"
+                        : p.name;
 
               if (!newTabsMap.has(groupKey)) {
                 newTabsMap.set(groupKey, {

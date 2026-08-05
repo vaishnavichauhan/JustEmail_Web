@@ -154,7 +154,7 @@ export default function SignUpPage() {
                 Unified Business Email Infrastructure
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
-                Deploy Google Workspace, Microsoft 365, Zoho Mail, and Titan under your custom business domain with 0-downtime cutover guarantee.
+                Deploy Google Workspace, Microsoft 365, Rediffmail, and Titan under your custom business domain with 0-downtime cutover guarantee.
               </p>
             </div>
 
