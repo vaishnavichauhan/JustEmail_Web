@@ -62,7 +62,7 @@ const slides = [
     title: "Deploy Google Workspace, Microsoft 365 & Titan Mail from One Partner.",
     description: "Get wholesale pricing, hybrid tenant coexistence, consolidated billing, and expert 24/7 technical setup for top email platforms.",
     primaryCta: { label: "Compare All Platforms", href: "/compare" },
-    secondaryCta: { label: "View Reseller Program", href: "/reseller" },
+    secondaryCta: { label: "Explore Email Plans", href: "/business-emails" },
     highlightText: "Official Certified Partner",
     ratingText: "100% Guaranteed SLA",
     visualType: "providers",
@@ -386,7 +386,7 @@ export default function Hero({
                 <motion.div
                   whileHover={{ y: -4, scale: 1.02 }}
                   transition={{ duration: 0.2 }}
-                  className="glass-card bg-slate-50 hover:bg-white rounded-2xl p-6 border border-gray-200/80 shadow-2xs hover:shadow-xl flex flex-col items-center justify-center gap-3 group cursor-pointer transition-all"
+                  className="glass-card bg-slate-50 hover:bg-white rounded-2xl p-4 border border-gray-600/80 shadow-2xs hover:shadow-xl flex flex-col items-center justify-center gap-3 group cursor-pointer transition-all"
                 >
                   <div className="w-12 h-12 relative flex items-center justify-center">
                     <Image
