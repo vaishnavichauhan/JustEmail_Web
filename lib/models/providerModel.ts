@@ -14,6 +14,7 @@ export interface ProviderItem {
   logoType: string;
   features: string[];
   enabled?: boolean;
+  showOnHome?: boolean;
   created_at?: string;
 }
 
@@ -37,6 +38,7 @@ export const ProviderModel = {
           logoType: r.logo_type,
           features: typeof r.features === "string" ? JSON.parse(r.features) : r.features || [],
           enabled: Boolean(r.enabled),
+          showOnHome: r.show_on_home !== undefined ? Boolean(r.show_on_home) : true,
           created_at: r.created_at
         }));
       }
@@ -62,44 +64,92 @@ export const ProviderModel = {
       logoType: (p.logoType || "").trim().toLowerCase(),
       features: Array.isArray(p.features) ? p.features : [],
       enabled: p.enabled ?? true,
+      showOnHome: p.showOnHome ?? true,
       created_at: p.created_at || new Date().toISOString()
     };
 
     const featuresJson = JSON.stringify(formattedItem.features || []);
-    await db.query(
-      `INSERT INTO providers (
-        id, name, subtitle, badge, price, period, billing_note,
-        storage, uptime, recommended_users, logo_type, features, enabled
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        name = VALUES(name),
-        subtitle = VALUES(subtitle),
-        badge = VALUES(badge),
-        price = VALUES(price),
-        period = VALUES(period),
-        billing_note = VALUES(billing_note),
-        storage = VALUES(storage),
-        uptime = VALUES(uptime),
-        recommended_users = VALUES(recommended_users),
-        logo_type = VALUES(logo_type),
-        features = VALUES(features),
-        enabled = VALUES(enabled)`,
-      [
-        formattedItem.id,
-        formattedItem.name,
-        formattedItem.subtitle,
-        formattedItem.badge,
-        formattedItem.price,
-        formattedItem.period,
-        formattedItem.billingNote,
-        formattedItem.storage,
-        formattedItem.uptime,
-        formattedItem.recommendedUsers,
-        formattedItem.logoType,
-        featuresJson,
-        formattedItem.enabled
-      ]
-    );
+    try {
+      await db.query(
+        `INSERT INTO providers (
+          id, name, subtitle, badge, price, period, billing_note,
+          storage, uptime, recommended_users, logo_type, features, enabled, show_on_home
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          name = VALUES(name),
+          subtitle = VALUES(subtitle),
+          badge = VALUES(badge),
+          price = VALUES(price),
+          period = VALUES(period),
+          billing_note = VALUES(billing_note),
+          storage = VALUES(storage),
+          uptime = VALUES(uptime),
+          recommended_users = VALUES(recommended_users),
+          logo_type = VALUES(logo_type),
+          features = VALUES(features),
+          enabled = VALUES(enabled),
+          show_on_home = VALUES(show_on_home)`,
+        [
+          formattedItem.id,
+          formattedItem.name,
+          formattedItem.subtitle,
+          formattedItem.badge,
+          formattedItem.price,
+          formattedItem.period,
+          formattedItem.billingNote,
+          formattedItem.storage,
+          formattedItem.uptime,
+          formattedItem.recommendedUsers,
+          formattedItem.logoType,
+          featuresJson,
+          formattedItem.enabled,
+          formattedItem.showOnHome
+        ]
+      );
+    } catch (dbErr: any) {
+      // Fallback query if show_on_home column is not created yet
+      if (dbErr?.message?.includes("show_on_home")) {
+        try {
+          await db.query("ALTER TABLE providers ADD COLUMN show_on_home BOOLEAN DEFAULT TRUE");
+          await this.create(p);
+          return;
+        } catch (alterErr) {}
+      }
+      await db.query(
+        `INSERT INTO providers (
+          id, name, subtitle, badge, price, period, billing_note,
+          storage, uptime, recommended_users, logo_type, features, enabled
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          name = VALUES(name),
+          subtitle = VALUES(subtitle),
+          badge = VALUES(badge),
+          price = VALUES(price),
+          period = VALUES(period),
+          billing_note = VALUES(billing_note),
+          storage = VALUES(storage),
+          uptime = VALUES(uptime),
+          recommended_users = VALUES(recommended_users),
+          logo_type = VALUES(logo_type),
+          features = VALUES(features),
+          enabled = VALUES(enabled)`,
+        [
+          formattedItem.id,
+          formattedItem.name,
+          formattedItem.subtitle,
+          formattedItem.badge,
+          formattedItem.price,
+          formattedItem.period,
+          formattedItem.billingNote,
+          formattedItem.storage,
+          formattedItem.uptime,
+          formattedItem.recommendedUsers,
+          formattedItem.logoType,
+          featuresJson,
+          formattedItem.enabled
+        ]
+      );
+    }
   },
 
   // Update existing provider
@@ -133,6 +183,7 @@ export const ProviderModel = {
           logoType: r.logo_type,
           features: typeof r.features === "string" ? JSON.parse(r.features) : r.features || [],
           enabled: Boolean(r.enabled),
+          showOnHome: r.show_on_home !== undefined ? Boolean(r.show_on_home) : true,
           created_at: r.created_at
         };
       }

@@ -59,12 +59,13 @@ import {
   X,
   Building2,
   Receipt,
-  Settings
+  Settings,
+  Home
 } from "lucide-react";
 import { useAuthStore } from "@/lib/authStore";
 
 // Provider Badges Highlight Options
-export const providerBadges = [
+const providerBadges = [
   { id: 1, title: "New" },
   { id: 2, title: "Most Popular" },
   { id: 3, title: "Recommended" },
@@ -343,6 +344,40 @@ export default function AdminPage() {
   const [isProviderModalOpen, setIsProviderModalOpen] = useState<boolean>(false);
   const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
   const [providerPriceError, setProviderPriceError] = useState<string>("");
+  const [teamsOption, setTeamsOption] = useState<string>("With Teams");
+
+  // Provider Filtering State
+  const [providerFilterName, setProviderFilterName] = useState<string>("all");
+  const [providerFilterHome, setProviderFilterHome] = useState<string>("all");
+  const [providerSearchQuery, setProviderSearchQuery] = useState<string>("");
+
+  const filteredProviders = adminProvidersList.filter((p) => {
+    if (providerFilterName !== "all") {
+      const pName = (p.name || "").toLowerCase();
+      const pLogo = (p.logoType || "").toLowerCase();
+      if (!pName.includes(providerFilterName) && !pLogo.includes(providerFilterName)) {
+        return false;
+      }
+    }
+
+    if (providerFilterHome === "home_on") {
+      if (p.showOnHome === false) return false;
+    } else if (providerFilterHome === "home_off") {
+      if (p.showOnHome !== false) return false;
+    }
+
+    if (providerSearchQuery.trim()) {
+      const q = providerSearchQuery.toLowerCase();
+      const match =
+        p.name?.toLowerCase().includes(q) ||
+        p.subtitle?.toLowerCase().includes(q) ||
+        p.price?.toLowerCase().includes(q) ||
+        p.badge?.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+
+    return true;
+  });
 
   const [providerFormData, setProviderFormData] = useState({
     id: "",
@@ -356,6 +391,7 @@ export default function AdminPage() {
     uptime: "99.9% SLA",
     recommendedUsers: "1 - 300 Users",
     logoType: "google",
+    showOnHome: true,
     featuresText: "",
   });
 
@@ -412,6 +448,7 @@ export default function AdminPage() {
     setEditingProviderId(null);
     setNewFeatureInput("");
     setProviderPriceError("");
+    setTeamsOption("With Teams");
     setProviderFormData({
       id: "",
       name: "Google Workspace",
@@ -424,6 +461,7 @@ export default function AdminPage() {
       uptime: "99.9% SLA",
       recommendedUsers: "1 - 300 Users",
       logoType: "google",
+      showOnHome: true,
       featuresText: "",
     });
     setIsProviderModalOpen(true);
@@ -436,10 +474,17 @@ export default function AdminPage() {
     const numericPriceOnly = p.price ? String(p.price).replace(/[^\d.]/g, "") : "136";
     const numericStorageOnly = p.storage ? String(p.storage).replace(/[^\d]/g, "") : "30";
 
+    const isWithoutTeams = (p.subtitle || "").toLowerCase().includes("without teams") || p.teamsOption === "Without Teams";
+    setTeamsOption(isWithoutTeams ? "Without Teams" : "With Teams");
+
+    const cleanSubtitle = (p.subtitle || "")
+      .replace(/\s*\((With|Without)\s*Teams\)/gi, "")
+      .trim();
+
     setProviderFormData({
       id: p.id || "",
       name: p.name || "Google Workspace",
-      subtitle: p.subtitle || "",
+      subtitle: cleanSubtitle || p.subtitle || "Base Plan",
       badge: p.badge || "",
       price: numericPriceOnly,
       period: p.period || "/ user / month",
@@ -448,6 +493,7 @@ export default function AdminPage() {
       uptime: p.uptime || "99.9% SLA",
       recommendedUsers: p.recommendedUsers || "1 - 300 Users",
       logoType: p.logoType || "google",
+      showOnHome: p.showOnHome !== false,
       featuresText: Array.isArray(p.features) ? p.features.join("\n") : typeof p.features === "string" ? p.features : "",
     });
     setIsProviderModalOpen(true);
@@ -488,10 +534,19 @@ export default function AdminPage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
+    const isMicrosoft = providerFormData.name.includes("Microsoft") || providerFormData.logoType === "microsoft";
+    const cleanSub = providerFormData.subtitle
+      .replace(/\s*\((With|Without)\s*Teams\)/gi, "")
+      .trim();
+    const finalSubtitle = isMicrosoft
+      ? `${cleanSub || "Business Basic"} (${teamsOption})`
+      : providerFormData.subtitle;
+
     const payload = {
       id: providerFormData.id || "",
       name: providerFormData.name,
-      subtitle: providerFormData.subtitle,
+      subtitle: finalSubtitle,
+      teamsOption: isMicrosoft ? teamsOption : undefined,
       badge: providerFormData.badge,
       price: formattedPrice,
       period: providerFormData.period,
@@ -502,6 +557,7 @@ export default function AdminPage() {
       logoType: providerFormData.logoType,
       features: featuresArray,
       enabled: true,
+      showOnHome: providerFormData.showOnHome,
     };
 
     try {
@@ -538,6 +594,23 @@ export default function AdminPage() {
       }
     } catch (err) {
       triggerAlert("Error updating provider status.");
+    }
+  };
+
+  const handleToggleHomeStatus = async (p: any) => {
+    try {
+      const updatedHomeStatus = p.showOnHome === false ? true : false;
+      const res = await fetch("/api/providers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: p.id, showOnHome: updatedHomeStatus }),
+      });
+      if (res.ok) {
+        triggerAlert(`Plan "${p.name} - ${p.subtitle}" ${updatedHomeStatus ? "will show on Homepage" : "hidden from Homepage"}`);
+        fetchAdminProviders();
+      }
+    } catch (err) {
+      triggerAlert("Error updating Homepage visibility.");
     }
   };
 
@@ -602,7 +675,6 @@ export default function AdminPage() {
     pricing: {
       googleStarter: "150",
       microsoftBasic: "120",
-      zohoWorkplace: "90",
       titanLite: "65",
     },
 
@@ -610,7 +682,6 @@ export default function AdminPage() {
     providerPermissions: {
       googleWorkspace: true,
       microsoft365: true,
-      zohoMail: false,
       titanMail: false,
       rediffmail: false,
     },
@@ -665,8 +736,8 @@ export default function AdminPage() {
       creditLimit: "50000",
       discountPercent: "15",
       notes: "",
-      pricing: { googleStarter: "150", microsoftBasic: "120", zohoWorkplace: "90", titanLite: "65" },
-      providerPermissions: { googleWorkspace: true, microsoft365: true, zohoMail: false, titanMail: false, rediffmail: false },
+      pricing: { googleStarter: "150", microsoftBasic: "120", titanLite: "65" },
+      providerPermissions: { googleWorkspace: true, microsoft365: true, titanMail: false, rediffmail: false },
       servicePermissions: { businessEmail: true, emailMigration: true, emailBackup: true, hybridSolutions: true, domainRegistration: false, managementServices: false },
     });
   };
@@ -688,7 +759,7 @@ export default function AdminPage() {
     { id: "2", company: "Tech Corp India", contact: "Priya Patel", provider: "Microsoft 365", status: "Active" },
     { id: "3", company: "Global Logistics", contact: "Rajesh Kumar", provider: "Cross-Tenant Split", status: "Active" },
     { id: "4", company: "Startup Wave", contact: "Sneha Reddy", provider: "Titan Mail", status: "Suspended" },
-    { id: "5", company: "Apex Digital", contact: "Vikram Mehta", provider: "Zoho Mail", status: "Active" },
+    { id: "5", company: "Apex Digital", contact: "Vikram Mehta", provider: "Rediffmail Pro", status: "Active" },
   ]);
 
   const [orders, setOrders] = useState<OrderRecord[]>([
@@ -701,7 +772,6 @@ export default function AdminPage() {
   const [providers, setProviders] = useState<ProviderRecord[]>([
     { id: "1", name: "Google Workspace", logo: "/images/google-workspace.png", enabled: true, activeAccounts: 480 },
     { id: "2", name: "Microsoft 365", logo: "/images/microsoft-365.png", enabled: true, activeAccounts: 390 },
-    { id: "3", name: "Zoho Mail", logo: "/images/zoho-mail.png", enabled: true, activeAccounts: 210 },
     { id: "4", name: "Titan Mail", logo: "/images/titan-mail.png", enabled: true, activeAccounts: 110 },
     { id: "5", name: "Rediffmail Pro", logo: "/images/rediff-mail.png", enabled: true, activeAccounts: 50 },
   ]);
@@ -709,7 +779,6 @@ export default function AdminPage() {
   const [plans, setPlans] = useState<PlanRecord[]>([
     { id: "1", provider: "Google Workspace", planName: "Business Starter", price: "₹160/mo", storage: "30 GB Cloud Storage" },
     { id: "2", provider: "Microsoft 365", planName: "Business Basic", price: "₹145/mo", storage: "50 GB Mailbox + 1 TB OneDrive" },
-    { id: "3", provider: "Zoho Mail", planName: "Mail Lite", price: "₹55/mo", storage: "5 GB Storage per user" },
     { id: "4", provider: "Titan Mail", planName: "Business Lite", price: "₹79/mo", storage: "10 GB Mailbox Storage" },
   ]);
 
@@ -746,10 +815,11 @@ export default function AdminPage() {
   // Company Settings Form State
   const [settings, setSettings] = useState({
     companyName: "justEmails Web Solutions",
-    supportEmail: "support@justemails.in",
-    phone: "+91 XXXX XXXXX",
-    address: "Vadodara - 122002",
-    smtpServer: "smtp.justemails.in:587",
+    supportEmail: "info@justemail.in",
+    phone: "9824466017",
+    whatsapp: "9824466017",
+    address: "Vadodara, Gujarat, India",
+    smtpServer: "smtp.justemail.in:587",
     paymentGateway: "Razorpay / UPI Live Enabled",
   });
 
@@ -1042,7 +1112,7 @@ export default function AdminPage() {
                       <div className="text-3xl font-black text-gray-900">1,240</div>
                       <div className="text-[11px] text-blue-600 font-semibold flex items-center gap-1">
                         <Activity className="w-3.5 h-3.5" />
-                        <span>Across Google, Microsoft, Zoho & Titan</span>
+                        <span>Across Google, Microsoft & Titan</span>
                       </div>
                     </div>
 
@@ -1147,7 +1217,7 @@ export default function AdminPage() {
 
                         <div>
                           <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                            <span className="text-amber-600">Zoho Mail</span>
+                            <span className="text-amber-600">Rediffmail Pro</span>
                             <span className="text-gray-700">223 Mailboxes (18%)</span>
                           </div>
                           <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
@@ -1248,10 +1318,40 @@ export default function AdminPage() {
                           type="text"
                           value={enquirySearchQuery}
                           onChange={(e) => setEnquirySearchQuery(e.target.value)}
-                          placeholder="Search organization, email..."
-                          className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 shadow-xs"
+                          placeholder="Search name, email, phone..."
+                          className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 shadow-2xs"
                         />
                       </div>
+                    </div>
+                  </div>
+
+                  {/* 24*7 Official Support Details Banner */}
+                  <div className="bg-gradient-to-r from-[#0B1437] via-[#14214D] to-blue-900 p-4 rounded-2xl text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0">
+                        <Phone className="w-5 h-5 text-blue-300" />
+                      </div>
+                      <div>
+                        <div className="font-extrabold text-sm flex items-center gap-2">
+                          <span>Official Admin Support Details</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 uppercase">24/7 Support Active</span>
+                        </div>
+                        <p className="text-[11px] text-gray-300">Official contact info attached for client enquiry follow-ups & customer service</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <a href="mailto:info@justemail.in" className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold flex items-center gap-1.5 transition-colors">
+                        <Mail className="w-3.5 h-3.5 text-blue-300" />
+                        <span>info@justemail.in</span>
+                      </a>
+                      <a href="tel:9824466017" className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold flex items-center gap-1.5 transition-colors">
+                        <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>9824466017</span>
+                      </a>
+                      <a href="https://wa.me/919824466017" target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold flex items-center gap-1.5 shadow-sm transition-colors">
+                        <span>💬 WhatsApp: 9824466017</span>
+                      </a>
                     </div>
                   </div>
 
@@ -1400,6 +1500,66 @@ export default function AdminPage() {
                     </button>
                   </div>
 
+                  {/* PROVIDERS FILTER BAR */}
+                  <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+                    {/* Search Input */}
+                    <div className="relative w-full md:w-72">
+                      <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        value={providerSearchQuery}
+                        onChange={(e) => setProviderSearchQuery(e.target.value)}
+                        placeholder="Search plan name, subtitle..."
+                        className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 shadow-2xs"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                      {/* Provider Name Filter */}
+                      <div className="flex items-center gap-1.5 flex-1 md:flex-none">
+                        <span className="text-[11px] font-extrabold text-gray-500 uppercase whitespace-nowrap">Provider:</span>
+                        <select
+                          value={providerFilterName}
+                          onChange={(e) => setProviderFilterName(e.target.value)}
+                          className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-800 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                        >
+                          <option value="all">All Providers ({adminProvidersList.length})</option>
+                          <option value="google">Google Workspace</option>
+                          <option value="microsoft">Microsoft 365</option>
+                          <option value="rediff">Rediffmail Pro</option>
+                          <option value="titan">Titan Mail</option>
+                        </select>
+                      </div>
+
+                      {/* Homepage Display Status Filter */}
+                      <div className="flex items-center gap-1.5 flex-1 md:flex-none">
+                        <span className="text-[11px] font-extrabold text-gray-500 uppercase whitespace-nowrap">Homepage:</span>
+                        <select
+                          value={providerFilterHome}
+                          onChange={(e) => setProviderFilterHome(e.target.value)}
+                          className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-800 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                        >
+                          <option value="all">All Visibility</option>
+                          <option value="home_on">Homepage: ON (Displayed)</option>
+                          <option value="home_off">Homepage: OFF (Hidden)</option>
+                        </select>
+                      </div>
+
+                      {(providerFilterName !== "all" || providerFilterHome !== "all" || providerSearchQuery) && (
+                        <button
+                          onClick={() => {
+                            setProviderFilterName("all");
+                            setProviderFilterHome("all");
+                            setProviderSearchQuery("");
+                          }}
+                          className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold border border-rose-200 transition-colors text-xs"
+                        >
+                          Reset Filters
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {loadingProviders ? (
                     <div className="p-12 text-center text-xs font-bold text-gray-500 flex items-center justify-center gap-2">
                       <RotateCw className="w-4 h-4 animate-spin text-blue-600" />
@@ -1420,9 +1580,27 @@ export default function AdminPage() {
                         <span>Create First Plan</span>
                       </button>
                     </div>
+                  ) : filteredProviders.length === 0 ? (
+                    <div className="p-12 text-center bg-white border border-gray-200 rounded-3xl shadow-sm space-y-3 max-w-xl mx-auto my-4">
+                      <Filter className="w-10 h-10 text-gray-400 mx-auto" />
+                      <div className="text-lg text-gray-900 font-extrabold">No Providers Match Your Filter</div>
+                      <p className="text-xs text-gray-500 max-w-md mx-auto">
+                        No provider plans matched the selected provider name or homepage visibility filter.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setProviderFilterName("all");
+                          setProviderFilterHome("all");
+                          setProviderSearchQuery("");
+                        }}
+                        className="px-4 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-xs"
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {adminProvidersList.map((p) => (
+                      {filteredProviders.map((p) => (
                         <div key={p.id} className="p-6 rounded-3xl bg-white border border-gray-200 space-y-4 shadow-sm relative flex flex-col justify-between">
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -1431,18 +1609,39 @@ export default function AdminPage() {
                                   {p.badge || "Official Provider"}
                                 </span>
                                 <h3 className="font-extrabold text-gray-900 text-lg mt-1">{p.name}</h3>
-                                <div className="text-xs font-semibold text-blue-600">{p.subtitle}</div>
+                                <div className="text-sm font-bold text-blue-600">
+                                  {(p.name?.includes("Microsoft") || p.logoType === "microsoft")
+                                    ? (p.subtitle?.includes("Teams)")
+                                      ? p.subtitle
+                                      : `${p.subtitle} (${p.teamsOption || "With Teams"})`)
+                                    : p.subtitle}
+                                </div>
                               </div>
-                              <button
-                                onClick={() => handleToggleProviderStatus(p)}
-                                title={p.enabled !== false ? "Disable Provider" : "Enable Provider"}
-                              >
-                                {p.enabled !== false ? (
-                                  <ToggleRight className="w-8 h-8 text-emerald-600" />
-                                ) : (
-                                  <ToggleLeft className="w-8 h-8 text-gray-400" />
-                                )}
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleToggleHomeStatus(p)}
+                                  className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold border flex items-center gap-1 transition-all ${
+                                    p.showOnHome !== false
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                      : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                  }`}
+                                  title={p.showOnHome !== false ? "Visible on Homepage (Click to hide from Home)" : "Hidden from Homepage (Click to show on Home)"}
+                                >
+                                  <Home className="w-3 h-3" />
+                                  <span>{p.showOnHome !== false ? "Home: ON" : "Home: OFF"}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => handleToggleProviderStatus(p)}
+                                  title={p.enabled !== false ? "Disable Provider Plan" : "Enable Provider Plan"}
+                                >
+                                  {p.enabled !== false ? (
+                                    <ToggleRight className="w-8 h-8 text-emerald-600" />
+                                  ) : (
+                                    <ToggleLeft className="w-8 h-8 text-gray-400" />
+                                  )}
+                                </button>
+                              </div>
                             </div>
 
                             <div className="pt-2 border-t border-gray-100 space-y-1">
@@ -1499,8 +1698,8 @@ export default function AdminPage() {
                       ))}
                     </div>
                   )}
-                </div>
-              )}
+              </div>
+            )}
 
               {/* ==========================================
                   10. SETTINGS SECTION (WHITE THEME + NAVY GRADIENT BUTTON)
@@ -1535,13 +1734,23 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Phone Number</label>
                         <input
                           type="text"
                           value={settings.phone}
                           onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">WhatsApp Number</label>
+                        <input
+                          type="text"
+                          value={settings.whatsapp}
+                          onChange={(e) => setSettings({ ...settings, whatsapp: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                         />
                       </div>
@@ -1670,6 +1879,82 @@ export default function AdminPage() {
 
             {/* Main Content Body */}
             {(() => {
+              const isGeneralEnquiry =
+                (selectedEnquiryModal.provider || "").toLowerCase().includes("general") ||
+                (selectedEnquiryModal.plan || "").toLowerCase().includes("inquiry") ||
+                (selectedEnquiryModal.plan || "").toLowerCase().includes("general") ||
+                selectedEnquiryModal.organization_name === "Direct Web Enquiry";
+
+              const rawPhoneDigits = (selectedEnquiryModal.phone_number || "").replace(/\D/g, "");
+              const whatsappDigits = rawPhoneDigits.length === 10 ? `91${rawPhoneDigits}` : rawPhoneDigits;
+
+              if (isGeneralEnquiry) {
+                return (
+                  <div className="space-y-6 text-xs">
+                    <div className="p-6 rounded-3xl bg-slate-900 text-white space-y-5 shadow-xl border border-slate-800 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3.5 relative z-10">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-400/30 flex items-center justify-center shrink-0">
+                            <User className="w-4.5 h-4.5" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-extrabold text-white">General Business Enquiry</h4>
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Client Contact & Notes Details</span>
+                          </div>
+                        </div>
+                        <span className="px-3.5 py-1 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-wider shadow-xs">
+                          General Enquiry
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 relative z-10">
+                        {/* Name */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Client Name</span>
+                          <div className="text-sm font-black text-white">
+                            {selectedEnquiryModal.first_name} {selectedEnquiryModal.last_name !== "Customer" ? selectedEnquiryModal.last_name : ""}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">Contact Person</div>
+                        </div>
+
+                        {/* Phone */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Phone Number</span>
+                          <div className="text-sm font-black text-emerald-400">
+                            {selectedEnquiryModal.phone_number?.startsWith("+91") ? selectedEnquiryModal.phone_number : `+91 ${selectedEnquiryModal.phone_number}`}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">Mobile (India +91)</div>
+                        </div>
+
+                        {/* Email */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Email Address</span>
+                          <div className="text-sm font-black text-blue-300 truncate" title={selectedEnquiryModal.email}>
+                            {selectedEnquiryModal.email}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">Primary Email</div>
+                        </div>
+                      </div>
+
+                      {/* Notes / Message */}
+                      <div className="bg-slate-950/90 p-4.5 rounded-2xl border border-slate-800 space-y-2 relative z-10">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Client Enquiry Message / Notes</span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-200 font-medium leading-relaxed whitespace-pre-wrap">
+                          {selectedEnquiryModal.notes || "No message notes provided."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               const matchedPlan = (() => {
                 if (!adminProvidersList || adminProvidersList.length === 0) return null;
 
@@ -1918,30 +2203,47 @@ export default function AdminPage() {
                 Enquiry Received: {selectedEnquiryModal.created_at ? new Date(selectedEnquiryModal.created_at).toLocaleString() : "Recently"}
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <a
-                  href={`mailto:${selectedEnquiryModal.email}`}
-                  className="px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold border border-blue-200 transition-colors flex items-center gap-1.5 justify-center flex-1 sm:flex-none"
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Send Email</span>
-                </a>
-                <a
-                  href={`tel:${selectedEnquiryModal.phone_number}`}
-                  className="px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold border border-emerald-200 transition-colors flex items-center gap-1.5 justify-center flex-1 sm:flex-none"
-                >
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>Call Contact</span>
-                </a>
-                <button
-                  onClick={() => handleDeleteEnquiry(selectedEnquiryModal.enquiry_id || selectedEnquiryModal.id)}
-                  className="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold border border-rose-200 transition-all flex items-center gap-1.5 justify-center shrink-0 active:scale-95"
-                  title="Delete Enquiry Record"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                  <span>Delete</span>
-                </button>
-              </div>
+              {(() => {
+                const rawDigits = (selectedEnquiryModal.phone_number || "").replace(/\D/g, "");
+                const waNumber = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+                return (
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                    <a
+                      href={`mailto:${selectedEnquiryModal.email}`}
+                      className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold border border-blue-200 transition-colors flex items-center gap-1.5 justify-center active:scale-95"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Send Email</span>
+                    </a>
+                    <a
+                      href={`tel:${selectedEnquiryModal.phone_number}`}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold border border-emerald-200 transition-colors flex items-center gap-1.5 justify-center active:scale-95"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Call Contact</span>
+                    </a>
+                    {waNumber && (
+                      <a
+                        href={`https://wa.me/${waNumber}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3.5 py-2 rounded-xl bg-green-50 hover:bg-green-100 text-green-700 font-extrabold border border-green-200 transition-colors flex items-center gap-1.5 justify-center active:scale-95"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-green-600" />
+                        <span>WhatsApp</span>
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleDeleteEnquiry(selectedEnquiryModal.enquiry_id || selectedEnquiryModal.id)}
+                      className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold border border-rose-200 transition-all flex items-center gap-1.5 justify-center shrink-0 active:scale-95"
+                      title="Delete Enquiry Record"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </motion.div>
         </div>
@@ -2002,7 +2304,6 @@ export default function AdminPage() {
                       let derivedLogo = "google";
                       if (selectedName.includes("Google")) derivedLogo = "google";
                       else if (selectedName.includes("Microsoft")) derivedLogo = "microsoft";
-                      else if (selectedName.includes("Zoho")) derivedLogo = "zoho";
                       else if (selectedName.includes("Rediff")) derivedLogo = "rediff";
                       else if (selectedName.includes("Titan")) derivedLogo = "titan";
 
@@ -2016,7 +2317,6 @@ export default function AdminPage() {
                   >
                     <option value="Google Workspace">Google Workspace</option>
                     <option value="Microsoft 365">Microsoft 365</option>
-                    <option value="Zoho Mail">Zoho Mail</option>
                     <option value="Rediffmail Pro">Rediffmail Pro</option>
                     <option value="Titan Mail">Titan Mail</option>
                   </select>
@@ -2055,6 +2355,23 @@ export default function AdminPage() {
                       )}
                   </select>
                 </div>
+
+                {/* 2b. NEW Teams Option Dropdown (Standalone for Microsoft 365) */}
+                {providerFormData.name.includes("Microsoft") && (
+                  <div>
+                    <label className="block text-xs font-extrabold text-blue-900 uppercase mb-1">
+                      Microsoft Teams Option
+                    </label>
+                    <select
+                      value={teamsOption}
+                      onChange={(e) => setTeamsOption(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-blue-50 border border-blue-300 text-xs font-extrabold text-blue-900 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                    >
+                      <option value="With Teams">With Teams Plan</option>
+                      <option value="Without Teams">Without Teams Plan</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* 3. Badge Tag Dropdown */}
                 <div>
@@ -2211,10 +2528,28 @@ export default function AdminPage() {
                   >
                     <option value="google">Google Workspace</option>
                     <option value="microsoft">Microsoft 365</option>
-                    <option value="zoho">Zoho Mail</option>
                     <option value="rediff">Rediffmail Pro</option>
                     <option value="titan">Titan Mail</option>
                   </select>
+                </div>
+
+                {/* 10b. Homepage Visibility Toggle */}
+                <div>
+                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
+                    Homepage Visibility
+                  </label>
+                  <label className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={providerFormData.showOnHome !== false}
+                      onChange={(e) => setProviderFormData({ ...providerFormData, showOnHome: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span className="text-xs font-extrabold text-gray-800 flex items-center gap-1.5">
+                      <Home className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Display on Main Homepage</span>
+                    </span>
+                  </label>
                 </div>
               </div>
 

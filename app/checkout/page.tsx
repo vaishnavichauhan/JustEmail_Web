@@ -161,63 +161,6 @@ const checkoutPlanLookup: Record<string, PlanDetails> = {
       "Microsoft Intune Device & App Management"
     ]
   },
-  "zoho-lite": {
-    id: "zoho-lite",
-    providerId: "zoho-mail",
-    providerName: "Zoho Mail",
-    planName: "Mail Lite",
-    price: "₹58",
-    amountNumeric: 58,
-    period: "/ user / month",
-    logo: "/images/zoho-mail.png",
-    storage: "5 GB NVMe Storage",
-    sla: "99.9% SLA Guarantee",
-    attachment: "25 MB Limit",
-    features: [
-      "5 GB NVMe Mailbox Storage per User",
-      "Custom Business Domain (@company.com)",
-      "Zero-Ads Interface with AI Anti-Spam",
-      "Webmail, iOS & Android Mobile Apps",
-      "Free 1-Click Migration & 24/7 Managed Support"
-    ]
-  },
-  "zoho-standard": {
-    id: "zoho-standard",
-    providerId: "zoho-mail",
-    providerName: "Zoho Mail",
-    planName: "Workplace Standard",
-    price: "₹99",
-    amountNumeric: 99,
-    period: "/ user / month",
-    logo: "/images/zoho-mail.png",
-    storage: "30 GB Pooled Storage",
-    sla: "99.9% SLA Guarantee",
-    attachment: "50 MB Limit",
-    features: [
-      "30 GB Pooled Mailbox + Cloud Drive Storage",
-      "Zoho Office Suite (Writer, Sheet, Show)",
-      "Team Chat (Cliq) & Video Meetings",
-      "Admin Control Console & Governance"
-    ]
-  },
-  "zoho-premium": {
-    id: "zoho-premium",
-    providerId: "zoho-mail",
-    providerName: "Zoho Mail",
-    planName: "Mail Premium",
-    price: "₹199",
-    amountNumeric: 199,
-    period: "/ user / month",
-    logo: "/images/zoho-mail.png",
-    storage: "50 GB Dedicated Storage",
-    sla: "99.9% SLA Guarantee",
-    attachment: "1 GB Huge Limit",
-    features: [
-      "50 GB Dedicated NVMe Storage",
-      "Huge File Attachments up to 1 GB",
-      "eDiscovery & Mail Archival Retention"
-    ]
-  },
   "rediff-starter": {
     id: "rediff-starter",
     providerId: "rediffmail-pro",

@@ -31,13 +31,13 @@ const homeFaqCategories: FaqCategory[] = [
   {
     id: "provider",
     name: "All Business Email FAQ",
-    description: "Questions regarding Google Workspace, Microsoft 365, Zoho Mail, Rediff, and Titan Mail",
+    description: "Questions regarding Google Workspace, Microsoft 365, Rediff, and Titan Mail",
     icon: Mail,
-    badge: "5 Official Providers",
+    badge: "4 Official Providers",
     questions: [
       {
-        q: "What is the main difference between Google Workspace, Microsoft 365, and Zoho Mail?",
-        a: "Google Workspace features cloud-native Gmail, Google Meet, and Drive. Microsoft 365 provides desktop Outlook, Teams, and Exchange online. Zoho Mail offers cost-effective NVMe mailbox storage with integrated business suite apps. justEmails allows you to deploy and manage all 5 official providers under one console."
+        q: "What is the main difference between Google Workspace, Microsoft 365, Titan Mail, and Rediffmail Pro?",
+        a: "Google Workspace features cloud-native Gmail, Google Meet, and Drive. Microsoft 365 provides desktop Outlook, Teams, and Exchange online. Titan Mail and Rediffmail Pro offer cost-effective mailbox storage with integrated productivity apps. justEmails allows you to deploy and manage all 4 official providers under one console."
       },
       {
         q: "Can I migrate my existing emails from another provider without missing any messages?",

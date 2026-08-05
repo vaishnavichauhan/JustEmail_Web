@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight, Quote, ShieldCheck, Award, Building2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const clientLogos = [
   { name: "Reliance Industries", logo: "/images/reliance.png" },
@@ -15,11 +16,10 @@ const clientLogos = [
 ];
 
 const techPartners = [
-  { name: "Google Workspace", role: "Official Cloud Partner", logo: "/images/google-workspace.png" },
-  { name: "Microsoft 365", role: "CSP Tier-1 Direct Partner", logo: "/images/microsoft-365.png" },
-  { name: "Zoho Mail", role: "Authorized Enterprise Partner", logo: "/images/zoho-mail.png" },
-  { name: "Titan Mail", role: "Authorized Global Distributor", logo: "/images/titan-mail.png" },
-  { name: "Rediffmail Pro", role: "Strategic Infrastructure Partner", logo: "/images/rediffmail.png" }
+  { name: "Google Workspace", role: "Official Cloud Partner", logo: "/images/google-workspace.png", href: "/business-emails/google-workspace" },
+  { name: "Microsoft 365", role: "CSP Tier-1 Direct Partner", logo: "/images/microsoft-365.png", href: "/business-emails/microsoft-365" },
+  { name: "Titan Mail", role: "Authorized Global Distributor", logo: "/images/titan-mail.png", href: "/business-emails/titan-mail" },
+  { name: "Rediffmail Pro", role: "Strategic Infrastructure Partner", logo: "/images/rediffmail.png", href: "/business-emails/rediffmail-pro" }
 ];
 
 const testimonials = [
@@ -42,7 +42,7 @@ const testimonials = [
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
     rating: 5,
     caseStudy: "Saved 40% Annual Email Licensing Cost",
-    quote: "We switched 400 team members to Zoho Mail Workplace through justEmails. Their expert admin setup included full DKIM, SPF, and DMARC anti-phishing policies. We saved ₹12 Lakhs annually while getting superior uptime.",
+    quote: "We switched 400 team members to Titan Mail Suite through justEmails. Their expert admin setup included full DKIM, SPF, and DMARC anti-phishing policies. We saved ₹12 Lakhs annually while getting superior uptime.",
     metrics: "₹12L Annual Savings • 100% Compliance"
   },
   {
@@ -87,26 +87,27 @@ export default function SocialProofSection() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 items-center">
             {techPartners.map((partner) => (
-              <div
-                key={partner.name}
-                className="p-6 rounded-2xl bg-gray-50/80 border border-gray-200/80 hover:border-blue-400 hover:bg-white transition-all duration-300 text-center flex flex-col items-center justify-center gap-3 group shadow-xs hover:shadow-md"
-              >
-                <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0">
-                  <Image
-                    src={partner.logo}
-                    alt={partner.name}
-                    width={40}
-                    height={40}
-                    className="object-contain max-h-8 w-auto group-hover:scale-105 transition-transform"
-                  />
+              <Link key={partner.name} href={partner.href} className="block">
+                <div
+                  className="p-6 rounded-2xl bg-gray-50/80 border border-gray-200/80 hover:border-blue-400 hover:bg-white transition-all duration-300 text-center flex flex-col items-center justify-center gap-3 group shadow-xs hover:shadow-md cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0">
+                    <Image
+                      src={partner.logo}
+                      alt={partner.name}
+                      width={40}
+                      height={40}
+                      className="object-contain max-h-8 w-auto group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-xs font-extrabold text-gray-900 group-hover:text-blue-600 transition-colors">{partner.name}</div>
+                    <div className="text-[10px] text-gray-500 font-medium">{partner.role}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs font-extrabold text-gray-900">{partner.name}</div>
-                  <div className="text-[10px] text-gray-500 font-medium">{partner.role}</div>
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

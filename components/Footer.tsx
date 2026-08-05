@@ -101,37 +101,46 @@ export default function Footer() {
             <div className="space-y-2.5 pt-2 text-slate-300 text-xs">
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-blue-400 shrink-0" />
-                <a href="mailto:support@justemails.in" className="hover:text-white transition-colors">
-                  support@justemails.in
+                <a href="mailto:info@justemail.in" className="hover:text-white font-bold transition-colors">
+                  info@justemail.in
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>+91 XXXXX XXXXX</span>
+                <a href="tel:9824466017" className="hover:text-white font-bold transition-colors">
+                  +91 98244 66017
+                </a>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="w-4 h-4 text-emerald-500 font-extrabold flex items-center justify-center text-xs shrink-0">💬</span>
+                <a href="https://wa.me/919824466017" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 font-bold transition-colors flex items-center gap-1.5">
+                  <span>WhatsApp: +91 98244 66017</span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">24/7 Live</span>
+                </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4 text-purple-400 shrink-0" />
                 <span>Vadodara, Gujarat, India</span>
               </div>
-              <div className="flex items-center gap-2.5 text-slate-400 text-[11px]">
+              <div className="flex items-center gap-2.5 text-slate-300 text-[11px] font-semibold">
                 <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>24/7/365 Infrastructure Operations</span>
+                <span>24/7/365 Dedicated Customer Support</span>
               </div>
             </div>
 
             {/* Social Links */}
             <div className="pt-3 flex items-center gap-3">
               <a
-                href="https://linkedin.com"
+                href="mailto:info@justemail.in"
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-600 transition-all"
-                title="LinkedIn"
+                title="Email"
               >
-                <Linkedin size={16} />
+                <Mail size={16} />
               </a>
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/profile.php?id=61591174138036"
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-700 hover:border-blue-700 transition-all"
@@ -170,11 +179,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/business-emails/zoho-mail" className="hover:text-white transition-colors">
-                  Zoho Mail Enterprise
-                </Link>
-              </li>
-              <li>
                 <Link href="/business-emails/titan-mail" className="hover:text-white transition-colors">
                   Titan Mail Business
                 </Link>
@@ -182,12 +186,6 @@ export default function Footer() {
               <li>
                 <Link href="/business-emails/rediffmail-pro" className="hover:text-white transition-colors">
                   Rediffmail Pro
-                </Link>
-              </li>
-              <li>
-                <Link href="/cross-tenant" className="hover:text-blue-400 font-bold transition-colors flex items-center gap-1">
-                  <span>Cross-Tenant Coexistence</span>
-                  <Sparkles className="w-3 h-3 text-amber-400" />
                 </Link>
               </li>
             </ul>
@@ -208,11 +206,6 @@ export default function Footer() {
               <li>
                 <Link href="/backup" className="hover:text-white transition-colors">
                   Cloud Backup & Archiving
-                </Link>
-              </li>
-              <li>
-                <Link href="/domains" className="hover:text-white transition-colors">
-                  Domain Name Registration
                 </Link>
               </li>
               <li>

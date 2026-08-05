@@ -65,7 +65,7 @@ export default function BusinessEmailsPage() {
               </h1>
 
               <p className="text-base sm:text-lg text-slate-300 font-normal leading-relaxed">
-                Deploy Google Workspace, Microsoft 365, Zoho Mail, Titan, and Rediffmail Pro mailboxes under your domain with 0-downtime migration, automated DKIM/SPF setup, and 24/7 support.
+                Deploy Google Workspace, Microsoft 365, Titan, and Rediffmail Pro mailboxes under your domain with 0-downtime migration, automated DKIM/SPF setup, and 24/7 support.
               </p>
 
               {/* Action Buttons */}
