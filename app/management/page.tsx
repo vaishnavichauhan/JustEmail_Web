@@ -236,15 +236,6 @@ export default function ManagementServicesPage() {
                         {service.description}
                       </p>
 
-                      <div className="pt-4">
-                        <button
-                          // onClick={() => handleOpenAuthModal("signup")}
-                          className="px-6 py-3.5 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all active:scale-95"
-                        >
-                          <span>Request {service.title.split(". ")[1]}</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </div>
                     </div>
 
                     {/* Right 2-Column Checklist Grid */}

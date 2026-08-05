@@ -430,8 +430,8 @@ export default function ProviderPlansSection({
                       }
                     }}
                     className={`h-2.5 rounded-full transition-all duration-300 ${activeIndex === dotIdx
-                        ? "w-8 bg-blue-600 shadow-sm"
-                        : "w-2.5 bg-gray-300 hover:bg-gray-400"
+                      ? "w-8 bg-blue-600 shadow-sm"
+                      : "w-2.5 bg-gray-300 hover:bg-gray-400"
                       }`}
                     aria-label={`Go to plan ${dotIdx + 1}`}
                   />

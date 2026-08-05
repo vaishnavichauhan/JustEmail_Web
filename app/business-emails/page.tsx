@@ -8,6 +8,8 @@ import Footer from "@/components/Footer";
 import ProviderPlansSection from "@/components/ProviderPlansSection";
 import ProviderComparisonTable from "@/components/ProviderComparisonTable";
 import EnterpriseSecuritySection from "@/components/EnterpriseSecuritySection";
+import OfficialAppsSection from "@/components/OfficialAppsSection";
+
 import ProviderFaqSection from "@/components/ProviderFaqSection";
 import {
   Sparkles,
@@ -150,7 +152,10 @@ export default function BusinessEmailsPage() {
         <ProviderComparisonTable />
       </div>
 
-      {/* --- 4. ENTERPRISE SECURITY & COMPLIANCE SLA SECTION --- */}
+      {/* --- 4. APPS INCLUDED (IF APPLICABLE) SECTION --- */}
+      <OfficialAppsSection />
+
+      {/* --- 5. ENTERPRISE SECURITY & COMPLIANCE SLA SECTION --- */}
       <EnterpriseSecuritySection />
 
       {/* --- 5. PROVIDER-SPECIFIC FAQ SECTION (LEFT TABS VS RIGHT Q&A) --- */}

@@ -7,6 +7,8 @@ import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/Footer";
 import { useCompare, PlanItem } from "@/lib/compareContext";
 import { useCart } from "@/lib/cartContext";
+import GoogleAppsIncludedSection from "@/components/GoogleAppsIncludedSection";
+import EnterpriseSecuritySection from "@/components/EnterpriseSecuritySection";
 import {
   Sparkles,
   ShieldCheck,
@@ -751,6 +753,9 @@ export default function SingleProviderPage({
           </div>
         </section>
       )}
+
+      {/* --- OFFICIAL INCLUDED APPS & FEATURES SECTION --- */}
+      <GoogleAppsIncludedSection providerSlug={normalizedSlug} />
 
       {/* --- WHY CHOOSE THIS PROVIDER SECTION --- */}
       <section className="py-20 bg-white border-t border-gray-200/80">

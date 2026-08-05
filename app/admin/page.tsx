@@ -387,7 +387,8 @@ export default function AdminPage() {
     price: "₹136",
     period: "/ user / month",
     billingNote: "Billed annually",
-    storage: "30 GB Storage",
+      storage: "30", // Default storage value
+    storageUnit: "GB",
     uptime: "99.9% SLA",
     recommendedUsers: "1 - 300 Users",
     logoType: "google",
@@ -458,6 +459,7 @@ export default function AdminPage() {
       period: "/ user / month",
       billingNote: "Billed annually",
       storage: "",
+      storageUnit: "GB",
       uptime: "99.9% SLA",
       recommendedUsers: "1 - 300 Users",
       logoType: "google",
@@ -472,7 +474,8 @@ export default function AdminPage() {
     setNewFeatureInput("");
     setProviderPriceError("");
     const numericPriceOnly = p.price ? String(p.price).replace(/[^\d.]/g, "") : "136";
-    const numericStorageOnly = p.storage ? String(p.storage).replace(/[^\d]/g, "") : "30";
+      const numericStorageOnly = p.storage ? String(p.storage).replace(/[^\d]/g, "") : "30"; 
+      const detectedUnit = /tb/i.test(String(p.storage || "")) ? "TB" : "GB";
 
     const isWithoutTeams = (p.subtitle || "").toLowerCase().includes("without teams") || p.teamsOption === "Without Teams";
     setTeamsOption(isWithoutTeams ? "Without Teams" : "With Teams");
@@ -489,7 +492,8 @@ export default function AdminPage() {
       price: numericPriceOnly,
       period: p.period || "/ user / month",
       billingNote: p.billingNote || "Billed annually",
-      storage: numericStorageOnly,
+        storage: numericStorageOnly,
+        storageUnit: detectedUnit,
       uptime: p.uptime || "99.9% SLA",
       recommendedUsers: p.recommendedUsers || "1 - 300 Users",
       logoType: p.logoType || "google",
@@ -527,7 +531,8 @@ export default function AdminPage() {
     const formattedPrice = `₹${rawNumericPrice}`;
 
     const rawNumericStorage = providerFormData.storage.replace(/[^\d]/g, "") || "10";
-    const formattedStorage = `${rawNumericStorage} GB Storage`;
+    const unit = providerFormData.storageUnit || "GB";
+    const formattedStorage = `${rawNumericStorage} ${unit} Storage`;
 
     const featuresArray = providerFormData.featuresText
       .split("\n")
@@ -2322,38 +2327,46 @@ export default function AdminPage() {
                   </select>
                 </div>
 
-                {/* 2. Subtitle Plan Dropdown */}
+                {/* 2. Subtitle Plan Dropdown (datalist - allows manual entry) */}
                 <div>
                   <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
                     Subtitle Plan <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    list="subtitleOptions"
                     value={providerFormData.subtitle}
                     onChange={(e) => setProviderFormData({ ...providerFormData, subtitle: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 cursor-pointer"
-                  >
-                    <option value="Base Plan">Base Plan</option>
-                    <option value="Starter Plan">Starter Plan</option>
-                    <option value="Standard Plan">Standard Plan</option>
-                    <option value="Pro">Pro</option>
-                    <option value="Business">Business</option>
-                    <option value="Advanced">Advanced</option>
-                    <option value="Premium">Premium</option>
-                    <option value="Enterprise">Enterprise</option>
-                    {providerFormData.subtitle &&
-                      ![
-                        "Base Plan",
-                        "Starter Plan",
-                        "Standard Plan",
-                        "Pro",
-                        "Business",
-                        "Advanced",
-                        "Premium",
-                        "Enterprise"
-                      ].includes(providerFormData.subtitle) && (
-                        <option value={providerFormData.subtitle}>{providerFormData.subtitle}</option>
-                      )}
-                  </select>
+                    placeholder="Select or type subtitle"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600"
+                  />
+
+                  <datalist id="subtitleOptions">
+                    {[
+                      "Starter",
+                      "Standard",
+                      "Business Basic",
+                      "Business Standard",
+                      "Business Premium",
+                      "Business",
+                      "Professional",
+                      "Enterprise",
+                    ].map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                    {providerFormData.subtitle && ![
+                      "Starter",
+                      "Standard",
+                      "Business Basic",
+                      "Business Standard",
+                      "Business Premium",
+                      "Business",
+                      "Professional",
+                      "Enterprise",
+                    ].includes(providerFormData.subtitle) && (
+                      <option key="custom" value={providerFormData.subtitle} />
+                    )}
+                  </datalist>
                 </div>
 
                 {/* 2b. NEW Teams Option Dropdown (Standalone for Microsoft 365) */}
@@ -2495,9 +2508,14 @@ export default function AdminPage() {
                       placeholder="30"
                       className="w-full px-4 py-3 rounded-l-xl bg-gray-50 border border-gray-200 text-xs font-extrabold text-gray-900 focus:outline-none focus:border-blue-600"
                     />
-                    <span className="px-3.5 py-3 rounded-r-xl bg-gray-200 border border-l-0 border-gray-300 text-xs font-black text-gray-800 shrink-0">
-                      GB
-                    </span>
+                    <select
+                      value={providerFormData.storageUnit}
+                      onChange={(e) => setProviderFormData({ ...providerFormData, storageUnit: e.target.value })}
+                      className="px-3.5 py-3 rounded-r-xl bg-gray-200 border border-l-0 border-gray-300 text-xs font-black text-gray-800 shrink-0 appearance-none"
+                    >
+                      <option value="GB">GB</option>
+                      <option value="TB">TB</option>
+                    </select>
                   </div>
                 </div>
 

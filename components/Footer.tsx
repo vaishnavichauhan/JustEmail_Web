@@ -131,19 +131,10 @@ export default function Footer() {
             {/* Social Links */}
             <div className="pt-3 flex items-center gap-3">
               <a
-                href="mailto:info@justemail.in"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-600 transition-all"
-                title="Email"
-              >
-                <Mail size={16} />
-              </a>
-              <a
                 href="https://www.facebook.com/profile.php?id=61591174138036"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-700 hover:border-blue-700 transition-all"
+                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-700 transition-all"
                 title="Facebook"
               >
                 <Facebook size={16} />
@@ -152,11 +143,29 @@ export default function Footer() {
                 href="https://www.instagram.com/just_email__?igsh=MWZvOHMyeWpkcjc4Zg=="
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-pink-600 hover:border-pink-600 transition-all"
+                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-700 transition-all"
                 title="Instagram"
               >
 
                 <Instagram size={16} />
+              </a>
+              <a
+                href="https://www.instagram.com/just_email__?igsh=MWZvOHMyeWpkcjc4Zg=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-700 transition-all"
+                title="Instagram"
+              >
+
+                <Link
+  href="https://www.linkedin.com/company/justemail/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600  hover:border-blue-700 transition-all"
+  title="LinkedIn"
+>
+  <Linkedin className="w-4 h-4" />
+</Link>
               </a>
             </div>
           </div>
@@ -216,11 +225,6 @@ export default function Footer() {
               <li>
                 <Link href="/business-emails" className="hover:text-white transition-colors">
                   Plan Comparison Matrix
-                </Link>
-              </li>
-              <li>
-                <Link href="/enquiryForm" className="hover:text-white transition-colors">
-                  Enterprise Migration Audit
                 </Link>
               </li>
             </ul>
