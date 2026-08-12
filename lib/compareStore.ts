@@ -16,6 +16,7 @@ export interface PlanItem {
   sla: string;
   attachment: string;
   features: string[];
+  productUrl?: string;
 }
 
 interface CompareState {

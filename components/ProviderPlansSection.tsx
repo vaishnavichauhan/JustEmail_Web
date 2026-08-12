@@ -55,12 +55,78 @@ export default function ProviderPlansSection({
     async function fetchDynamicProviderPlans() {
       try {
         setLoading(true);
-        const res = await fetch("/api/providers");
-        if (res.ok) {
-          const data = await res.json();
-          const newTabsMap = new Map<string, ProviderTab>();
-          const newPlansMap: Record<string, PlanItem[]> = {};
+        const [dbRes, whmcsRes] = await Promise.allSettled([
+          fetch("/api/providers"),
+          fetch("/api/whmcs-products"),
+        ]);
 
+        const newTabsMap = new Map<string, ProviderTab>();
+        const newPlansMap: Record<string, PlanItem[]> = {};
+
+        // 1. Process WHMCS Products
+        if (whmcsRes.status === "fulfilled" && whmcsRes.value.ok) {
+          try {
+            const whmcsData = await whmcsRes.value.json();
+            if (
+              whmcsData.result === "success" &&
+              whmcsData.products?.product &&
+              Array.isArray(whmcsData.products.product)
+            ) {
+              const whmcsProductsList: PlanItem[] = whmcsData.products.product.map((p: any) => {
+                let formattedPrice = "Custom";
+                let formattedPeriod = "/ month";
+
+                if (p.paytype === "free") {
+                  formattedPrice = "Free";
+                  formattedPeriod = "/ forever";
+                } else if (p.pricing?.USD?.monthly && p.pricing.USD.monthly !== "-1.00") {
+                  const prefix = p.pricing.USD.prefix || "$";
+                  const suffix = p.pricing.USD.suffix || " USD";
+                  formattedPrice = `${prefix}${p.pricing.USD.monthly}${suffix}`;
+                  formattedPeriod = "/ month";
+                } else if (p.pricing?.USD?.msetupfee && p.pricing.USD.msetupfee !== "0.00") {
+                  const prefix = p.pricing.USD.prefix || "$";
+                  formattedPrice = `${prefix}${p.pricing.USD.msetupfee}`;
+                  formattedPeriod = " Setup";
+                }
+
+                return {
+                  id: `whmcs-${p.pid}`,
+                  providerId: "whmcs",
+                  providerName: "WHMCS Live Store",
+                  planName: p.name,
+                  subtitle: p.slug || "WHMCS Plan",
+                  price: formattedPrice,
+                  period: formattedPeriod,
+                  logo: "/images/logo1.svg",
+                  storage: p.type === "hostingaccount" ? "cPanel Web Hosting" : "Managed Business Email",
+                  sla: "99.99% Uptime",
+                  attachment: "30 MB",
+                  features: p.description
+                    ? [p.description, "Instant WHMCS Automated Setup", "24/7 Managed Support"]
+                    : ["Instant Automated WHMCS Provisioning", "Official Partner Control Panel", "24/7 Managed Engineering Support"],
+                  productUrl: p.product_url,
+                };
+              });
+
+              if (whmcsProductsList.length > 0) {
+                newTabsMap.set("whmcs", {
+                  id: "whmcs",
+                  name: "WHMCS Live Store",
+                  logo: "/images/logo1.svg",
+                  badge: "Live Automated Store",
+                });
+                newPlansMap["whmcs"] = whmcsProductsList;
+              }
+            }
+          } catch (e) {
+            console.error("Error parsing WHMCS products response:", e);
+          }
+        }
+
+        // 2. Process DB Providers
+        if (dbRes.status === "fulfilled" && dbRes.value.ok) {
+          const data = await dbRes.value.json();
           if (data.data && Array.isArray(data.data)) {
             const enabledList = data.data.filter((p: any) => p.enabled !== false);
             enabledList.forEach((p: any) => {
@@ -123,21 +189,25 @@ export default function ProviderPlansSection({
               }
             });
           }
+        }
 
-          // Ensure standard tabs exist with empty plan list if no database plans exist for that tab
-          providerTabs.forEach((t) => {
-            if (!newTabsMap.has(t.id)) {
-              newTabsMap.set(t.id, t);
-            }
-            if (!newPlansMap[t.id]) {
-              newPlansMap[t.id] = [];
-            }
-          });
+        // Ensure standard tabs exist
+        providerTabs.forEach((t) => {
+          if (!newTabsMap.has(t.id)) {
+            newTabsMap.set(t.id, t);
+          }
+          if (!newPlansMap[t.id]) {
+            newPlansMap[t.id] = [];
+          }
+        });
 
-          if (isMounted) {
-            const mergedTabs = Array.from(newTabsMap.values());
-            setTabs(mergedTabs);
-            setPlansData(newPlansMap);
+        if (isMounted) {
+          const mergedTabs = Array.from(newTabsMap.values());
+          setTabs(mergedTabs);
+          setPlansData(newPlansMap);
+
+          if (newPlansMap["whmcs"] && newPlansMap["whmcs"].length > 0) {
+            setSelectedProviderTab("whmcs");
           }
         }
       } catch (err) {
@@ -400,15 +470,30 @@ export default function ProviderPlansSection({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <Link
-                            href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName || plan.providerId || "")}&plan=${encodeURIComponent(`${plan.planName || ""} (${plan.price || ""})`)}&providerId=${encodeURIComponent(plan.id || "")}`}
-                            className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-300 border ${isFeaturedCard
-                              ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/40 hover:text-white"
-                              : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
-                              }`}
-                          >
-                            <span>Enquiry now</span>
-                          </Link>
+                          {plan.productUrl ? (
+                            <a
+                              href={plan.productUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-300 flex items-center gap-1.5 shadow-md active:scale-95 ${isFeaturedCard
+                                ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30"
+                                : "bg-[#0B1437] hover:bg-black text-white shadow-slate-900/20"
+                                }`}
+                            >
+                              <span>Order on WHMCS</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </a>
+                          ) : (
+                            <Link
+                              href={`/enquiryForm?provider=${encodeURIComponent(plan.providerName || plan.providerId || "")}&plan=${encodeURIComponent(`${plan.planName || ""} (${plan.price || ""})`)}&providerId=${encodeURIComponent(plan.id || "")}`}
+                              className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-300 border ${isFeaturedCard
+                                ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/40 hover:text-white"
+                                : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
+                                }`}
+                            >
+                              <span>Enquiry now</span>
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </motion.div>

@@ -3,16 +3,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { 
-  Mail, 
-  Lock, 
-  User, 
-  ArrowRight, 
-  X, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Eye, 
-  EyeOff, 
+import {
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  X,
+  CheckCircle2,
+  ShieldCheck,
+  Eye,
+  EyeOff,
   AlertCircle,
   Check
 } from "lucide-react";
@@ -232,8 +232,8 @@ export default function AuthModal({ isOpen, mode: initialMode, onClose }: AuthMo
               {mode === "login" ? "Sign In to Justemail" : "Create Your Account"}
             </h3>
             <p className="text-xs text-gray-500 font-medium mt-1">
-              {mode === "login" 
-                ? "Access your business mailboxes & migration console" 
+              {mode === "login"
+                ? "Access your business mailboxes & migration console"
                 : "Get started with official provider business mailboxes"}
             </p>
           </div>
