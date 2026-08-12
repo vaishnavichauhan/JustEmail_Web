@@ -29,7 +29,7 @@ interface BusinessEmailCard {
   storage: string;
   uptime: string;
   recommendedUsers: string;
-  logoType: "zoho" | "rediff" | "titan" | "google" | "microsoft";
+  logoType: "rediff" | "titan" | "google" | "microsoft";
   features: string[];
 }
 
@@ -53,33 +53,9 @@ export default function BusinessEmailsSection({
         if (res.ok) {
           const data = await res.json();
           if (data.data && Array.isArray(data.data)) {
-            const enabledList = data.data.filter((p: any) => p.enabled !== false);
+            const enabledList = data.data.filter((p: any) => p.enabled !== false && p.showOnHome !== false);
             if (enabledList.length > 0) {
-              // Group by provider logoType/group and keep ONLY the LOWEST PRICE plan for each provider
-              const lowestPriceProviderMap = new Map<string, any>();
-
-              const getNumericPrice = (priceStr: string | number): number => {
-                if (typeof priceStr === "number") return priceStr;
-                const num = parseInt(String(priceStr || "0").replace(/[^0-9]/g, ""), 10);
-                return isNaN(num) ? 999999 : num;
-              };
-
-              enabledList.forEach((p: any) => {
-                const groupKey = (p.logoType || p.id).toLowerCase();
-                const existing = lowestPriceProviderMap.get(groupKey);
-
-                if (!existing) {
-                  lowestPriceProviderMap.set(groupKey, p);
-                } else {
-                  const existingPrice = getNumericPrice(existing.price);
-                  const currentPrice = getNumericPrice(p.price);
-                  if (currentPrice < existingPrice) {
-                    lowestPriceProviderMap.set(groupKey, p);
-                  }
-                }
-              });
-
-              const lowestCards = Array.from(lowestPriceProviderMap.values()).map((p: any) => ({
+              const homepageCards = enabledList.map((p: any) => ({
                 id: p.id,
                 name: p.name,
                 subtitle: p.subtitle || p.name,
@@ -89,13 +65,13 @@ export default function BusinessEmailsSection({
                 billingNote: p.billingNote || "Billed annually",
                 storage: p.storage,
                 uptime: p.uptime,
-                recommendedUsers: p.recommendedUsers || "1 - 100 Users",
+                recommendedUsers: p.recommendedUsers || "1 - 300 Users",
                 logoType: (p.logoType || "custom").toLowerCase() as any,
                 features: Array.isArray(p.features) ? p.features : [],
               }));
 
               if (isMounted) {
-                setCards(lowestCards);
+                setCards(homepageCards);
               }
             } else {
               if (isMounted) {
@@ -134,18 +110,6 @@ export default function BusinessEmailsSection({
 
   const renderLogo = (logoType: string, isDark?: boolean) => {
     switch (logoType) {
-      case "zoho":
-        return (
-          <div className="w-11 h-11 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center p-2 overflow-hidden">
-            <Image
-              src="/images/zoho-mail.png"
-              alt="Zoho Mail Logo"
-              width={36}
-              height={36}
-              className="object-contain max-h-7 w-auto"
-            />
-          </div>
-        );
       case "rediff":
         return (
           <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 overflow-hidden p-2">
@@ -298,7 +262,7 @@ export default function BusinessEmailsSection({
                                 {card.subtitle}
                               </p>
                               <Link
-                                href={`/business-emails/${card.logoType === 'google' ? 'google-workspace' : card.logoType === 'microsoft' ? 'microsoft-365' : card.logoType === 'zoho' ? 'zoho-mail' : card.logoType === 'rediff' ? 'rediffmail-pro' : 'titan-mail'}`}
+                                href={`/business-emails/${card.logoType === 'google' ? 'google-workspace' : card.logoType === 'microsoft' ? 'microsoft-365' : card.logoType === 'rediff' ? 'rediffmail-pro' : 'titan-mail'}`}
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all border ${isDark
                                   ? "bg-blue-500/20 text-blue-300 border-blue-400/30 hover:bg-blue-500/30 hover:text-white"
                                   : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-900"
@@ -317,7 +281,7 @@ export default function BusinessEmailsSection({
                               <HardDrive className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                               <span>{card.storage}</span>
                             </div>
-                            
+
                             <div className="flex items-center gap-1.5 col-span-2">
                               <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                               <span>{card.recommendedUsers}</span>

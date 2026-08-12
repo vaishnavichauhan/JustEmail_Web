@@ -58,9 +58,30 @@ import {
   RotateCw,
   X,
   Building2,
-  Receipt
+  Receipt,
+  Settings,
+  Home
 } from "lucide-react";
 import { useAuthStore } from "@/lib/authStore";
+
+// Provider Badges Highlight Options
+const providerBadges = [
+  { id: 1, title: "New" },
+  { id: 2, title: "Most Popular" },
+  { id: 3, title: "Recommended" },
+  { id: 4, title: "Fast Setup" },
+  { id: 5, title: "Business Ready" },
+  { id: 6, title: "Secure" },
+  { id: 7, title: "High Performance" },
+  { id: 8, title: "Global Choice" },
+  { id: 9, title: "Top Rated" },
+  { id: 10, title: "Premium" },
+  { id: 11, title: "Best Seller" },
+  { id: 12, title: "Best Value" },
+  { id: 13, title: "Enterprise Grade" },
+  { id: 14, title: "Trusted" },
+  { id: 15, title: "Scalable" },
+];
 
 // Pre-set Manual Hardcoded Admin Credentials
 const MANUAL_ADMIN_ID = "admin@justemails.in";
@@ -160,6 +181,7 @@ export default function AdminPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
+
   useEffect(() => {
     let isMounted = true;
     async function checkAdminAuth() {
@@ -213,6 +235,13 @@ export default function AdminPage() {
   const [enquirySearchQuery, setEnquirySearchQuery] = useState("");
   const [selectedEnquiryModal, setSelectedEnquiryModal] = useState<any | null>(null);
 
+
+  const adminDashboardData = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "enquiries", label: "Business Enquiries", icon: Inbox, badge: enquiriesList.length },
+    { id: "providers", label: "Providers", icon: Server },
+    { id: "settings", label: "Setting", icon: SettingsIcon }
+  ]
   const fetchEnquiries = async () => {
     try {
       setLoadingEnquiries(true);
@@ -256,29 +285,57 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteEnquiry = async (id: any) => {
+  // Delete Confirmation Modal State
+  const [deleteModalState, setDeleteModalState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const openDeleteModal = (title: string, description: string, onConfirm: () => void) => {
+    setDeleteModalState({
+      isOpen: true,
+      title,
+      description,
+      onConfirm,
+    });
+  };
+
+  const handleDeleteEnquiry = (enq: any) => {
+    const id = typeof enq === "object" ? enq?.enquiry_id || enq?.id : enq;
     if (!id) return;
-    if (!confirm("Are you sure you want to delete this enquiry record?")) return;
 
-    try {
-      const res = await fetch(`/api/enquiry?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
+    const targetEnq = typeof enq === "object" ? enq : enquiriesList.find((e) => String(e.id) === String(id) || String(e.enquiry_id) === String(id));
+    const name = targetEnq?.organization_name
+      ? `${targetEnq.organization_name} (${targetEnq.first_name || ""} ${targetEnq.last_name || ""})`.trim()
+      : `Enquiry #${id}`;
 
-      if (res.ok) {
-        setEnquiriesList((prev) => prev.filter((e) => String(e.id) !== String(id) && String(e.enquiry_id) !== String(id)));
-        if (selectedEnquiryModal && (String(selectedEnquiryModal.id) === String(id) || String(selectedEnquiryModal.enquiry_id) === String(id))) {
-          setSelectedEnquiryModal(null);
+    openDeleteModal(
+      "Delete Business Enquiry",
+      `Are you sure you want to permanently delete the enquiry record for "${name}"? This action cannot be undone.`,
+      async () => {
+        try {
+          const res = await fetch(`/api/enquiry?id=${encodeURIComponent(id)}`, {
+            method: "DELETE",
+          });
+
+          if (res.ok) {
+            setEnquiriesList((prev) => prev.filter((e) => String(e.id) !== String(id) && String(e.enquiry_id) !== String(id)));
+            if (selectedEnquiryModal && (String(selectedEnquiryModal.id) === String(id) || String(selectedEnquiryModal.enquiry_id) === String(id))) {
+              setSelectedEnquiryModal(null);
+            }
+            triggerAlert("Enquiry deleted successfully!");
+          } else {
+            const data = await res.json();
+            triggerAlert(data.error || "Failed to delete enquiry.");
+          }
+        } catch (err) {
+          console.error("Delete enquiry error:", err);
+          triggerAlert("Error occurred while deleting enquiry.");
         }
-        triggerAlert("Enquiry deleted successfully!");
-      } else {
-        const data = await res.json();
-        triggerAlert(data.error || "Failed to delete enquiry.");
       }
-    } catch (err) {
-      console.error("Delete enquiry error:", err);
-      triggerAlert("Error occurred while deleting enquiry.");
-    }
+    );
   };
 
   // Provider Management State & Functions
@@ -286,19 +343,56 @@ export default function AdminPage() {
   const [loadingProviders, setLoadingProviders] = useState<boolean>(false);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState<boolean>(false);
   const [editingProviderId, setEditingProviderId] = useState<string | null>(null);
+  const [providerPriceError, setProviderPriceError] = useState<string>("");
+  const [teamsOption, setTeamsOption] = useState<string>("With Teams");
+
+  // Provider Filtering State
+  const [providerFilterName, setProviderFilterName] = useState<string>("all");
+  const [providerFilterHome, setProviderFilterHome] = useState<string>("all");
+  const [providerSearchQuery, setProviderSearchQuery] = useState<string>("");
+
+  const filteredProviders = adminProvidersList.filter((p) => {
+    if (providerFilterName !== "all") {
+      const pName = (p.name || "").toLowerCase();
+      const pLogo = (p.logoType || "").toLowerCase();
+      if (!pName.includes(providerFilterName) && !pLogo.includes(providerFilterName)) {
+        return false;
+      }
+    }
+
+    if (providerFilterHome === "home_on") {
+      if (p.showOnHome === false) return false;
+    } else if (providerFilterHome === "home_off") {
+      if (p.showOnHome !== false) return false;
+    }
+
+    if (providerSearchQuery.trim()) {
+      const q = providerSearchQuery.toLowerCase();
+      const match =
+        p.name?.toLowerCase().includes(q) ||
+        p.subtitle?.toLowerCase().includes(q) ||
+        p.price?.toLowerCase().includes(q) ||
+        p.badge?.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+
+    return true;
+  });
 
   const [providerFormData, setProviderFormData] = useState({
     id: "",
     name: "",
     subtitle: "",
-    badge: "",
+    badge: "New",
     price: "₹136",
     period: "/ user / month",
     billingNote: "Billed annually",
-    storage: "30 GB Storage",
+    storage: "30", // Default storage value
+    storageUnit: "GB",
     uptime: "99.9% SLA",
-    recommendedUsers: "5 - 500 Users",
+    recommendedUsers: "1 - 300 Users",
     logoType: "google",
+    showOnHome: true,
     featuresText: "",
   });
 
@@ -308,10 +402,9 @@ export default function AdminPage() {
       const res = await fetch("/api/providers");
       if (res.ok) {
         const data = await res.json();
-        console.log("Providerdata", data);
-
         if (data.data) {
-          setAdminProvidersList(data.data);
+          const latestFirst = data?.data;
+          setAdminProvidersList(latestFirst);
         }
       }
     } catch (err) {
@@ -355,18 +448,22 @@ export default function AdminPage() {
   const handleOpenAddProviderModal = () => {
     setEditingProviderId(null);
     setNewFeatureInput("");
+    setProviderPriceError("");
+    setTeamsOption("With Teams");
     setProviderFormData({
       id: "",
       name: "Google Workspace",
       subtitle: "Base Plan",
-      badge: "",
+      badge: "New",
       price: "",
       period: "/ user / month",
-      billingNote: "",
+      billingNote: "Billed annually",
       storage: "",
+      storageUnit: "GB",
       uptime: "99.9% SLA",
       recommendedUsers: "1 - 300 Users",
       logoType: "google",
+      showOnHome: true,
       featuresText: "",
     });
     setIsProviderModalOpen(true);
@@ -375,21 +472,32 @@ export default function AdminPage() {
   const handleOpenEditProviderModal = (p: any) => {
     setEditingProviderId(p.id);
     setNewFeatureInput("");
+    setProviderPriceError("");
     const numericPriceOnly = p.price ? String(p.price).replace(/[^\d.]/g, "") : "136";
     const numericStorageOnly = p.storage ? String(p.storage).replace(/[^\d]/g, "") : "30";
+    const detectedUnit = /tb/i.test(String(p.storage || "")) ? "TB" : "GB";
+
+    const isWithoutTeams = (p.subtitle || "").toLowerCase().includes("without teams") || p.teamsOption === "Without Teams";
+    setTeamsOption(isWithoutTeams ? "Without Teams" : "With Teams");
+
+    const cleanSubtitle = (p.subtitle || "")
+      .replace(/\s*\((With|Without)\s*Teams\)/gi, "")
+      .trim();
 
     setProviderFormData({
       id: p.id || "",
       name: p.name || "Google Workspace",
-      subtitle: p.subtitle || "",
+      subtitle: cleanSubtitle || p.subtitle || "Base Plan",
       badge: p.badge || "",
       price: numericPriceOnly,
       period: p.period || "/ user / month",
       billingNote: p.billingNote || "Billed annually",
       storage: numericStorageOnly,
+      storageUnit: detectedUnit,
       uptime: p.uptime || "99.9% SLA",
       recommendedUsers: p.recommendedUsers || "1 - 300 Users",
       logoType: p.logoType || "google",
+      showOnHome: p.showOnHome !== false,
       featuresText: Array.isArray(p.features) ? p.features.join("\n") : typeof p.features === "string" ? p.features : "",
     });
     setIsProviderModalOpen(true);
@@ -402,26 +510,48 @@ export default function AdminPage() {
       return;
     }
 
-    const rawNumericPrice = providerFormData.price.replace(/[^\d.]/g, "");
-    if (!rawNumericPrice || isNaN(parseFloat(rawNumericPrice))) {
-      triggerAlert("Please enter a valid numeric price (e.g. 100).");
+    const rawNumericPrice = providerFormData.price ? String(providerFormData.price).trim() : "";
+    const priceRegex = /^\d+(\.\d{1,2})?$/;
+    const numericPriceVal = parseFloat(rawNumericPrice);
+
+    if (!rawNumericPrice || !priceRegex.test(rawNumericPrice) || isNaN(numericPriceVal)) {
+      const errMsg = "Please enter a valid numeric price.";
+      setProviderPriceError(errMsg);
       return;
     }
+
+    if (numericPriceVal < 1) {
+      const errMsg = "Price cannot be less than ₹1.";
+      setProviderPriceError(errMsg);
+      return;
+    }
+
+    setProviderPriceError("");
 
     const formattedPrice = `₹${rawNumericPrice}`;
 
     const rawNumericStorage = providerFormData.storage.replace(/[^\d]/g, "") || "10";
-    const formattedStorage = `${rawNumericStorage} GB Storage`;
+    const unit = providerFormData.storageUnit || "GB";
+    const formattedStorage = `${rawNumericStorage} ${unit} Storage`;
 
     const featuresArray = providerFormData.featuresText
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
 
+    const isMicrosoft = providerFormData.name.includes("Microsoft") || providerFormData.logoType === "microsoft";
+    const cleanSub = providerFormData.subtitle
+      .replace(/\s*\((With|Without)\s*Teams\)/gi, "")
+      .trim();
+    const finalSubtitle = isMicrosoft
+      ? `${cleanSub || "Business Basic"} (${teamsOption})`
+      : providerFormData.subtitle;
+
     const payload = {
       id: providerFormData.id || "",
       name: providerFormData.name,
-      subtitle: providerFormData.subtitle,
+      subtitle: finalSubtitle,
+      teamsOption: isMicrosoft ? teamsOption : undefined,
       badge: providerFormData.badge,
       price: formattedPrice,
       period: providerFormData.period,
@@ -432,6 +562,7 @@ export default function AdminPage() {
       logoType: providerFormData.logoType,
       features: featuresArray,
       enabled: true,
+      showOnHome: providerFormData.showOnHome,
     };
 
     try {
@@ -471,17 +602,39 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteProviderItem = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+  const handleToggleHomeStatus = async (p: any) => {
     try {
-      const res = await fetch(`/api/providers?id=${id}`, { method: "DELETE" });
+      const updatedHomeStatus = p.showOnHome === false ? true : false;
+      const res = await fetch("/api/providers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: p.id, showOnHome: updatedHomeStatus }),
+      });
       if (res.ok) {
-        triggerAlert(`Provider ${name} deleted.`);
+        triggerAlert(`Plan "${p.name} - ${p.subtitle}" ${updatedHomeStatus ? "will show on Homepage" : "hidden from Homepage"}`);
         fetchAdminProviders();
       }
     } catch (err) {
-      triggerAlert("Failed to delete provider.");
+      triggerAlert("Error updating Homepage visibility.");
     }
+  };
+
+  const handleDeleteProviderItem = (id: string, name: string) => {
+    openDeleteModal(
+      "Delete Provider Plan",
+      `Are you sure you want to permanently delete provider "${name}"? This action cannot be undone.`,
+      async () => {
+        try {
+          const res = await fetch(`/api/providers?id=${id}`, { method: "DELETE" });
+          if (res.ok) {
+            triggerAlert(`Provider ${name} deleted.`);
+            fetchAdminProviders();
+          }
+        } catch (err) {
+          triggerAlert("Failed to delete provider.");
+        }
+      }
+    );
   };
 
   // Interactive Action Notifications
@@ -527,7 +680,6 @@ export default function AdminPage() {
     pricing: {
       googleStarter: "150",
       microsoftBasic: "120",
-      zohoWorkplace: "90",
       titanLite: "65",
     },
 
@@ -535,7 +687,6 @@ export default function AdminPage() {
     providerPermissions: {
       googleWorkspace: true,
       microsoft365: true,
-      zohoMail: false,
       titanMail: false,
       rediffmail: false,
     },
@@ -590,8 +741,8 @@ export default function AdminPage() {
       creditLimit: "50000",
       discountPercent: "15",
       notes: "",
-      pricing: { googleStarter: "150", microsoftBasic: "120", zohoWorkplace: "90", titanLite: "65" },
-      providerPermissions: { googleWorkspace: true, microsoft365: true, zohoMail: false, titanMail: false, rediffmail: false },
+      pricing: { googleStarter: "150", microsoftBasic: "120", titanLite: "65" },
+      providerPermissions: { googleWorkspace: true, microsoft365: true, titanMail: false, rediffmail: false },
       servicePermissions: { businessEmail: true, emailMigration: true, emailBackup: true, hybridSolutions: true, domainRegistration: false, managementServices: false },
     });
   };
@@ -613,7 +764,7 @@ export default function AdminPage() {
     { id: "2", company: "Tech Corp India", contact: "Priya Patel", provider: "Microsoft 365", status: "Active" },
     { id: "3", company: "Global Logistics", contact: "Rajesh Kumar", provider: "Cross-Tenant Split", status: "Active" },
     { id: "4", company: "Startup Wave", contact: "Sneha Reddy", provider: "Titan Mail", status: "Suspended" },
-    { id: "5", company: "Apex Digital", contact: "Vikram Mehta", provider: "Zoho Mail", status: "Active" },
+    { id: "5", company: "Apex Digital", contact: "Vikram Mehta", provider: "Rediffmail Pro", status: "Active" },
   ]);
 
   const [orders, setOrders] = useState<OrderRecord[]>([
@@ -626,7 +777,6 @@ export default function AdminPage() {
   const [providers, setProviders] = useState<ProviderRecord[]>([
     { id: "1", name: "Google Workspace", logo: "/images/google-workspace.png", enabled: true, activeAccounts: 480 },
     { id: "2", name: "Microsoft 365", logo: "/images/microsoft-365.png", enabled: true, activeAccounts: 390 },
-    { id: "3", name: "Zoho Mail", logo: "/images/zoho-mail.png", enabled: true, activeAccounts: 210 },
     { id: "4", name: "Titan Mail", logo: "/images/titan-mail.png", enabled: true, activeAccounts: 110 },
     { id: "5", name: "Rediffmail Pro", logo: "/images/rediff-mail.png", enabled: true, activeAccounts: 50 },
   ]);
@@ -634,7 +784,6 @@ export default function AdminPage() {
   const [plans, setPlans] = useState<PlanRecord[]>([
     { id: "1", provider: "Google Workspace", planName: "Business Starter", price: "₹160/mo", storage: "30 GB Cloud Storage" },
     { id: "2", provider: "Microsoft 365", planName: "Business Basic", price: "₹145/mo", storage: "50 GB Mailbox + 1 TB OneDrive" },
-    { id: "3", provider: "Zoho Mail", planName: "Mail Lite", price: "₹55/mo", storage: "5 GB Storage per user" },
     { id: "4", provider: "Titan Mail", planName: "Business Lite", price: "₹79/mo", storage: "10 GB Mailbox Storage" },
   ]);
 
@@ -671,10 +820,11 @@ export default function AdminPage() {
   // Company Settings Form State
   const [settings, setSettings] = useState({
     companyName: "justEmails Web Solutions",
-    supportEmail: "support@justemails.in",
-    phone: "+91 98765 43210",
-    address: "DLF Cyber City, Tower 10, Gurugram, Haryana - 122002",
-    smtpServer: "smtp.justemails.in:587",
+    supportEmail: "info@justemail.in",
+    phone: "9824466017",
+    whatsapp: "9824466017",
+    address: "Vadodara, Gujarat, India",
+    smtpServer: "smtp.justemail.in:587",
     paymentGateway: "Razorpay / UPI Live Enabled",
   });
 
@@ -841,11 +991,7 @@ export default function AdminPage() {
 
               {/* Sidebar Menu Items */}
               <nav className="space-y-1 text-xs font-bold">
-                {[
-                  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-                  { id: "enquiries", label: "Business Enquiries", icon: Inbox, badge: enquiriesList.length },
-                  { id: "providers", label: "Providers", icon: Server },
-                ].map((item) => {
+                {adminDashboardData.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeMenu === item.id;
                   return (
@@ -971,7 +1117,7 @@ export default function AdminPage() {
                       <div className="text-3xl font-black text-gray-900">1,240</div>
                       <div className="text-[11px] text-blue-600 font-semibold flex items-center gap-1">
                         <Activity className="w-3.5 h-3.5" />
-                        <span>Across Google, Microsoft, Zoho & Titan</span>
+                        <span>Across Google, Microsoft & Titan</span>
                       </div>
                     </div>
 
@@ -1076,7 +1222,7 @@ export default function AdminPage() {
 
                         <div>
                           <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                            <span className="text-amber-600">Zoho Mail</span>
+                            <span className="text-amber-600">Rediffmail Pro</span>
                             <span className="text-gray-700">223 Mailboxes (18%)</span>
                           </div>
                           <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200">
@@ -1145,7 +1291,6 @@ export default function AdminPage() {
 
                 </div>
               )}
-
               {/* ==========================================
                   BUSINESS ENQUIRIES SECTION
                  ========================================== */}
@@ -1178,10 +1323,40 @@ export default function AdminPage() {
                           type="text"
                           value={enquirySearchQuery}
                           onChange={(e) => setEnquirySearchQuery(e.target.value)}
-                          placeholder="Search organization, email..."
-                          className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 shadow-xs"
+                          placeholder="Search name, email, phone..."
+                          className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 shadow-2xs"
                         />
                       </div>
+                    </div>
+                  </div>
+
+                  {/* 24*7 Official Support Details Banner */}
+                  <div className="bg-gradient-to-r from-[#0B1437] via-[#14214D] to-blue-900 p-4 rounded-2xl text-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0">
+                        <Phone className="w-5 h-5 text-blue-300" />
+                      </div>
+                      <div>
+                        <div className="font-extrabold text-sm flex items-center gap-2">
+                          <span>Official Admin Support Details</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 uppercase">24/7 Support Active</span>
+                        </div>
+                        <p className="text-[11px] text-gray-300">Official contact info attached for client enquiry follow-ups & customer service</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <a href="mailto:info@justemail.in" className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold flex items-center gap-1.5 transition-colors">
+                        <Mail className="w-3.5 h-3.5 text-blue-300" />
+                        <span>info@justemail.in</span>
+                      </a>
+                      <a href="tel:9824466017" className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold flex items-center gap-1.5 transition-colors">
+                        <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>9824466017</span>
+                      </a>
+                      <a href="https://wa.me/919824466017" target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold flex items-center gap-1.5 shadow-sm transition-colors">
+                        <span>💬 WhatsApp: 9824466017</span>
+                      </a>
                     </div>
                   </div>
 
@@ -1208,7 +1383,6 @@ export default function AdminPage() {
                               <th className="p-4">Contact Person</th>
                               <th className="p-4">Email Addresses</th>
                               <th className="p-4">Phone Number</th>
-                              <th className="p-4">Location</th>
                               <th className="p-4">Provider / Plan</th>
                               <th className="p-4">Submitted At</th>
                               <th className="p-4">Status</th>
@@ -1256,17 +1430,18 @@ export default function AdminPage() {
                                   <td className="p-4 font-mono font-bold text-gray-900 whitespace-nowrap">
                                     {enq.phone_number?.startsWith("+91") ? enq.phone_number : `+91 ${enq.phone_number}`}
                                   </td>
-                                  <td className="p-4 font-semibold text-gray-700 whitespace-nowrap">
-                                    {enq.city}, {enq.state} {enq.zip}
-                                  </td>
                                   <td className="p-4 whitespace-nowrap">
-                                    {enq.provider || enq.plan ? (
-                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase">
-                                        {enq.provider || enq.plan}
+                                    <div className="space-y-1">
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase block w-max">
+                                        {enq.provider || enq.plan || "General Enquiry"}
                                       </span>
-                                    ) : (
-                                      <span className="text-gray-400 text-[11px]">General Enquiry</span>
-                                    )}
+                                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase block w-max ${String(enq.plan_type || "").toLowerCase() === "renew"
+                                        ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                                        : "bg-blue-100 text-blue-800 border border-blue-200"
+                                        }`}>
+                                        {String(enq.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}
+                                      </span>
+                                    </div>
                                   </td>
                                   <td className="p-4 text-gray-500 text-[11px] whitespace-nowrap">
                                     {enq.created_at ? new Date(enq.created_at).toLocaleString() : "Recently"}
@@ -1297,7 +1472,7 @@ export default function AdminPage() {
                                         View Details
                                       </button>
                                       <button
-                                        onClick={() => handleDeleteEnquiry(enq.enquiry_id || enq.id)}
+                                        onClick={() => handleDeleteEnquiry(enq)}
                                         className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition-all active:scale-95 flex items-center justify-center shrink-0"
                                         title="Delete Business Enquiry"
                                       >
@@ -1314,279 +1489,6 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
-
-              {/* ==========================================
-                  RESELLERS PARTNERS MANAGEMENT SECTION
-                 ========================================== */}
-              {activeMenu === "resellers" && (
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900">Reseller Partners Management</h2>
-                      <p className="text-xs text-gray-500">Create reseller accounts, configure wholesale pricing, track reseller sales & customer growth.</p>
-                    </div>
-
-                    <button
-                      onClick={() => setIsCreateResellerModalOpen(true)}
-                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 hover:from-black hover:to-blue-950 text-white font-extrabold text-xs shadow-md flex items-center gap-2 active:scale-95 self-start sm:self-auto"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Create Reseller Account</span>
-                    </button>
-                  </div>
-
-                  {/* RESELLER ACCOUNTS TABLE */}
-                  <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 font-extrabold uppercase border-b border-gray-200">
-                          <th className="p-4">Reseller Partner</th>
-                          <th className="p-4">Contact & Email</th>
-                          <th className="p-4">Active Customers</th>
-                          <th className="p-4">Seats Sold</th>
-                          <th className="p-4">Wholesale Rate</th>
-                          <th className="p-4">Total Sales</th>
-                          <th className="p-4">Reseller Profit</th>
-                          <th className="p-4">Status</th>
-                          <th className="p-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
-                        {resellers.map((r) => (
-                          <tr key={r.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="p-4 font-bold text-gray-900 flex items-center gap-2">
-                              <ShieldCheck className="w-4 h-4 text-indigo-600" />
-                              <span>{r.resellerName}</span>
-                            </td>
-                            <td className="p-4 font-semibold">
-                              <div>{r.contactPerson}</div>
-                              <div className="text-[11px] font-mono text-gray-500">{r.email}</div>
-                            </td>
-                            <td className="p-4 font-extrabold text-blue-700">{r.activeCustomers} Clients</td>
-                            <td className="p-4 font-extrabold text-gray-900">{r.totalSeatsSold} Mailboxes</td>
-                            <td className="p-4 font-bold text-indigo-900">{r.wholesaleRate}</td>
-                            <td className="p-4 font-extrabold text-gray-900">{r.totalSales}</td>
-                            <td className="p-4 font-black text-emerald-600">{r.earnedProfit}</td>
-                            <td className="p-4">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${r.status === "Active" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"}`}>
-                                {r.status}
-                              </span>
-                            </td>
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button onClick={() => triggerAlert(`Setting wholesale pricing for ${r.resellerName}`)} className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-800 font-extrabold text-[11px] border border-indigo-200">Set Pricing</button>
-                                <button onClick={() => triggerAlert(`Viewing sales reports for ${r.resellerName}`)} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 font-extrabold text-[11px] border border-gray-200">View Sales</button>
-                                <button onClick={() => triggerAlert(`Viewing customers of ${r.resellerName}`)} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 font-extrabold text-[11px] border border-gray-200">View Customers</button>
-                                <button
-                                  onClick={() => {
-                                    setResellers(resellers.map(item => item.id === r.id ? { ...item, status: item.status === "Active" ? "Suspended" : "Active" } : item));
-                                    triggerAlert(`Reseller ${r.resellerName} status updated`);
-                                  }}
-                                  className={`px-2.5 py-1 rounded-lg font-extrabold text-[11px] ${r.status === "Active" ? "bg-amber-50 text-amber-800 border border-amber-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}
-                                >
-                                  {r.status === "Active" ? "Suspend" : "Activate"}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ==========================================
-                  1. CUSTOMERS SECTION (WHITE THEME + NAVY GRADIENT BUTTONS)
-                 ========================================== */}
-              {activeMenu === "customers" && (
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900">Customers Management</h2>
-                      <p className="text-xs text-gray-500">Manage all registered enterprise email customers & filter by provider.</p>
-                    </div>
-
-                    {/* NAVY LINEAR GRADIENT BUTTON */}
-                    <button
-                      onClick={() => triggerAlert("Opening Add New Customer modal...")}
-                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 hover:from-black hover:to-blue-950 text-white font-extrabold text-xs shadow-md shadow-blue-950/20 transition-all flex items-center gap-2 active:scale-95 self-start sm:self-auto"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Customer</span>
-                    </button>
-                  </div>
-
-                  {/* FILTER CONTROLS BAR */}
-                  <div className="p-4 rounded-3xl bg-white border border-gray-200 space-y-4 shadow-sm">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
-                      {/* Search Bar */}
-                      <div className="relative w-full md:w-80">
-                        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
-                        <input
-                          type="text"
-                          value={customerSearchTerm}
-                          onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                          placeholder="Search company or contact..."
-                          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white"
-                        />
-                      </div>
-
-                      {/* Dropdown Filter */}
-                      <div className="flex items-center gap-2">
-                        <Filter className="w-4 h-4 text-gray-400 shrink-0" />
-                        <select
-                          value={customerProviderFilter}
-                          onChange={(e) => setCustomerProviderFilter(e.target.value)}
-                          className="bg-gray-50 border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-600"
-                        >
-                          <option value="all">All Providers ({customers.length})</option>
-                          <option value="Google Workspace">Google Workspace</option>
-                          <option value="Microsoft 365">Microsoft 365</option>
-                          <option value="Cross-Tenant Split">Cross-Tenant Split</option>
-                          <option value="Zoho Mail">Zoho Mail</option>
-                          <option value="Titan Mail">Titan Mail</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Interactive Filter Pills */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-                      {[
-                        { id: "all", label: "All Customers" },
-                        { id: "Google Workspace", label: "Google Workspace" },
-                        { id: "Microsoft 365", label: "Microsoft 365" },
-                        { id: "Cross-Tenant Split", label: "Cross-Tenant Split" },
-                        { id: "Zoho Mail", label: "Zoho Mail" },
-                        { id: "Titan Mail", label: "Titan Mail" },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => setCustomerProviderFilter(item.id)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap ${customerProviderFilter === item.id
-                            ? "bg-[#0B1437] text-white shadow-md"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-                            }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* CUSTOMER DATA TABLE (WHITE THEME) */}
-                  <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 font-extrabold uppercase border-b border-gray-200">
-                          <th className="p-4">Company</th>
-                          <th className="p-4">Contact Person</th>
-                          <th className="p-4">Provider</th>
-                          <th className="p-4">Status</th>
-                          <th className="p-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
-                        {customers
-                          .filter((c) => {
-                            const matchesSearch =
-                              c.company.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                              c.contact.toLowerCase().includes(customerSearchTerm.toLowerCase());
-                            const matchesProvider =
-                              customerProviderFilter === "all" || c.provider === customerProviderFilter;
-                            return matchesSearch && matchesProvider;
-                          })
-                          .map((c) => (
-                            <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                              <td className="p-4 font-bold text-gray-900 flex items-center gap-2">
-                                <Building className="w-4 h-4 text-blue-600" />
-                                <span>{c.company}</span>
-                              </td>
-                              <td className="p-4 font-semibold">{c.contact}</td>
-                              <td className="p-4">
-                                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                                  {c.provider}
-                                </span>
-                              </td>
-                              <td className="p-4">
-                                <span
-                                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${c.status === "Active" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
-                                    }`}
-                                >
-                                  {c.status}
-                                </span>
-                              </td>
-                              <td className="p-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  <button onClick={() => triggerAlert(`Viewing customer details for ${c.company}`)} className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#0B1437] to-blue-900 text-white font-extrabold text-[11px] shadow-xs">View</button>
-                                  <button onClick={() => triggerAlert(`Editing customer ${c.company}`)} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 font-extrabold text-[11px] border border-gray-200">Edit</button>
-                                  <button onClick={() => triggerAlert(`Customer ${c.company} suspended`)} className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-extrabold text-[11px] border border-amber-200">Suspend</button>
-                                  <button onClick={() => setCustomers(customers.filter(item => item.id !== c.id))} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-extrabold text-[11px] border border-rose-200">Delete</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ==========================================
-                  2. ORDERS SECTION
-                 ========================================== */}
-              {activeMenu === "orders" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900">Orders Management</h2>
-                      <p className="text-xs text-gray-500">Every purchase appears here in real-time.</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 font-extrabold uppercase border-b border-gray-200">
-                          <th className="p-4">Order ID</th>
-                          <th className="p-4">Customer</th>
-                          <th className="p-4">Provider</th>
-                          <th className="p-4">Plan</th>
-                          <th className="p-4">Amount</th>
-                          <th className="p-4">Status</th>
-                          <th className="p-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
-                        {orders.map((o) => (
-                          <tr key={o.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-bold text-gray-900">{o.orderId}</td>
-                            <td className="p-4 font-semibold">{o.customer}</td>
-                            <td className="p-4">{o.provider}</td>
-                            <td className="p-4 font-bold text-blue-700">{o.plan}</td>
-                            <td className="p-4 font-extrabold text-emerald-700">{o.amount}</td>
-                            <td className="p-4">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${o.status === "Completed" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : o.status === "Pending" ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-rose-50 text-rose-700 border border-rose-200"
-                                }`}>
-                                {o.status}
-                              </span>
-                            </td>
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button onClick={() => triggerAlert(`Viewing order ${o.orderId}`)} className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#0B1437] to-blue-900 text-white font-extrabold text-[11px]">View</button>
-                                <button onClick={() => triggerAlert(`Updated order status for ${o.orderId}`)} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 border border-gray-200 font-extrabold text-[11px]">Update Status</button>
-                                <button onClick={() => setOrders(orders.filter(item => item.id !== o.id))} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[11px]">Delete</button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
               {/* ==========================================
                   3. PROVIDERS SECTION
                  ========================================== */}
@@ -1605,6 +1507,66 @@ export default function AdminPage() {
                       <Plus className="w-4 h-4" />
                       <span>Add New Provider</span>
                     </button>
+                  </div>
+
+                  {/* PROVIDERS FILTER BAR */}
+                  <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+                    {/* Search Input */}
+                    <div className="relative w-full md:w-72">
+                      <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        value={providerSearchQuery}
+                        onChange={(e) => setProviderSearchQuery(e.target.value)}
+                        placeholder="Search plan name, subtitle..."
+                        className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 shadow-2xs"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                      {/* Provider Name Filter */}
+                      <div className="flex items-center gap-1.5 flex-1 md:flex-none">
+                        <span className="text-[11px] font-extrabold text-gray-500 uppercase whitespace-nowrap">Provider:</span>
+                        <select
+                          value={providerFilterName}
+                          onChange={(e) => setProviderFilterName(e.target.value)}
+                          className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-800 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                        >
+                          <option value="all">All Providers ({adminProvidersList.length})</option>
+                          <option value="google">Google Workspace</option>
+                          <option value="microsoft">Microsoft 365</option>
+                          <option value="rediff">Rediffmail Pro</option>
+                          <option value="titan">Titan Mail</option>
+                        </select>
+                      </div>
+
+                      {/* Homepage Display Status Filter */}
+                      <div className="flex items-center gap-1.5 flex-1 md:flex-none">
+                        <span className="text-[11px] font-extrabold text-gray-500 uppercase whitespace-nowrap">Homepage:</span>
+                        <select
+                          value={providerFilterHome}
+                          onChange={(e) => setProviderFilterHome(e.target.value)}
+                          className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-800 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                        >
+                          <option value="all">All Visibility</option>
+                          <option value="home_on">Homepage: ON (Displayed)</option>
+                          <option value="home_off">Homepage: OFF (Hidden)</option>
+                        </select>
+                      </div>
+
+                      {(providerFilterName !== "all" || providerFilterHome !== "all" || providerSearchQuery) && (
+                        <button
+                          onClick={() => {
+                            setProviderFilterName("all");
+                            setProviderFilterHome("all");
+                            setProviderSearchQuery("");
+                          }}
+                          className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold border border-rose-200 transition-colors text-xs"
+                        >
+                          Reset Filters
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {loadingProviders ? (
@@ -1627,9 +1589,27 @@ export default function AdminPage() {
                         <span>Create First Plan</span>
                       </button>
                     </div>
+                  ) : filteredProviders.length === 0 ? (
+                    <div className="p-12 text-center bg-white border border-gray-200 rounded-3xl shadow-sm space-y-3 max-w-xl mx-auto my-4">
+                      <Filter className="w-10 h-10 text-gray-400 mx-auto" />
+                      <div className="text-lg text-gray-900 font-extrabold">No Providers Match Your Filter</div>
+                      <p className="text-xs text-gray-500 max-w-md mx-auto">
+                        No provider plans matched the selected provider name or homepage visibility filter.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setProviderFilterName("all");
+                          setProviderFilterHome("all");
+                          setProviderSearchQuery("");
+                        }}
+                        className="px-4 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-xs"
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {adminProvidersList.map((p) => (
+                      {filteredProviders.map((p) => (
                         <div key={p.id} className="p-6 rounded-3xl bg-white border border-gray-200 space-y-4 shadow-sm relative flex flex-col justify-between">
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -1638,18 +1618,38 @@ export default function AdminPage() {
                                   {p.badge || "Official Provider"}
                                 </span>
                                 <h3 className="font-extrabold text-gray-900 text-lg mt-1">{p.name}</h3>
-                                <div className="text-xs font-semibold text-blue-600">{p.subtitle}</div>
+                                <div className="text-sm font-bold text-blue-600">
+                                  {(p.name?.includes("Microsoft") || p.logoType === "microsoft")
+                                    ? (p.subtitle?.includes("Teams)")
+                                      ? p.subtitle
+                                      : `${p.subtitle} (${p.teamsOption || "With Teams"})`)
+                                    : p.subtitle}
+                                </div>
                               </div>
-                              <button
-                                onClick={() => handleToggleProviderStatus(p)}
-                                title={p.enabled !== false ? "Disable Provider" : "Enable Provider"}
-                              >
-                                {p.enabled !== false ? (
-                                  <ToggleRight className="w-8 h-8 text-emerald-600" />
-                                ) : (
-                                  <ToggleLeft className="w-8 h-8 text-gray-400" />
-                                )}
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleToggleHomeStatus(p)}
+                                  className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold border flex items-center gap-1 transition-all ${p.showOnHome !== false
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                    : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                    }`}
+                                  title={p.showOnHome !== false ? "Visible on Homepage (Click to hide from Home)" : "Hidden from Homepage (Click to show on Home)"}
+                                >
+                                  <Home className="w-3 h-3" />
+                                  <span>{p.showOnHome !== false ? "Home: ON" : "Home: OFF"}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => handleToggleProviderStatus(p)}
+                                  title={p.enabled !== false ? "Disable Provider Plan" : "Enable Provider Plan"}
+                                >
+                                  {p.enabled !== false ? (
+                                    <ToggleRight className="w-8 h-8 text-emerald-600" />
+                                  ) : (
+                                    <ToggleLeft className="w-8 h-8 text-gray-400" />
+                                  )}
+                                </button>
+                              </div>
                             </div>
 
                             <div className="pt-2 border-t border-gray-100 space-y-1">
@@ -1689,7 +1689,7 @@ export default function AdminPage() {
                           <div className="pt-4 border-t border-gray-100 flex items-center gap-2">
                             <button
                               onClick={() => handleOpenEditProviderModal(p)}
-                              className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 text-white font-extrabold text-xs shadow-xs hover:from-black transition-all flex items-center justify-center gap-1.5"
+                              className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-[#0B1437] via-[#14214D] to-blue-900 hover:from-blue-600 hover:via-indigo-600 hover:to-[#0B1437] text-white font-extrabold text-xs shadow-sm hover:shadow-lg hover:shadow-blue-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-1.5"
                             >
                               <Edit className="w-3.5 h-3.5" />
                               <span>Edit Provider</span>
@@ -1706,237 +1706,6 @@ export default function AdminPage() {
                       ))}
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* ==========================================
-                  4. PLANS SECTION
-                 ========================================== */}
-              {activeMenu === "plans" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900">Manage Subscription Plans</h2>
-                      <p className="text-xs text-gray-500">Manage plan pricing & quotas directly from admin without editing code.</p>
-                    </div>
-                    <button onClick={() => triggerAlert("Opening Add New Plan modal...")} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 text-white font-extrabold text-xs shadow-md flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
-                      <span>Add Plan</span>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {plans.map((pl) => (
-                      <div key={pl.id} className="p-6 rounded-3xl bg-white border border-gray-200 space-y-4 shadow-sm">
-                        <div className="text-xs font-extrabold text-blue-700 uppercase">{pl.provider}</div>
-                        <div className="text-lg font-black text-gray-900">{pl.planName}</div>
-                        <div className="text-2xl font-extrabold text-emerald-700">{pl.price}</div>
-                        <div className="text-xs text-gray-500">{pl.storage}</div>
-                        <div className="pt-2 flex gap-2">
-                          <button onClick={() => triggerAlert(`Editing ${pl.planName}`)} className="w-full py-2 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 text-white font-extrabold text-xs">Edit Plan</button>
-                          <button onClick={() => setPlans(plans.filter(item => item.id !== pl.id))} className="py-2 px-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-xs">Delete</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ==========================================
-                  5. DOMAINS SECTION
-                 ========================================== */}
-              {activeMenu === "domains" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-extrabold text-gray-900">Domain & DNS Records</h2>
-                    <p className="text-xs text-gray-500">Manage customer domain MX, SPF, DKIM, DMARC validation status.</p>
-                  </div>
-
-                  <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 font-extrabold uppercase border-b border-gray-200">
-                          <th className="p-4">Domain Name</th>
-                          <th className="p-4">Provider</th>
-                          <th className="p-4">MX</th>
-                          <th className="p-4">SPF</th>
-                          <th className="p-4">DKIM</th>
-                          <th className="p-4">DMARC</th>
-                          <th className="p-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
-                        {domains.map((d) => (
-                          <tr key={d.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-bold text-gray-900">{d.domainName}</td>
-                            <td className="p-4">{d.provider}</td>
-                            <td className="p-4"><span className="text-emerald-700 font-bold">✓ {d.mx}</span></td>
-                            <td className="p-4"><span className="text-emerald-700 font-bold">✓ {d.spf}</span></td>
-                            <td className="p-4"><span className="text-emerald-700 font-bold">✓ {d.dkim}</span></td>
-                            <td className="p-4"><span className={d.dmarc === "Verified" ? "text-emerald-700 font-bold" : "text-amber-700 font-bold"}>{d.dmarc}</span></td>
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button onClick={() => triggerAlert(`Executing DNS verification for ${d.domainName}`)} className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#0B1437] to-blue-900 text-white font-extrabold text-[11px]">Verify</button>
-                                <button onClick={() => triggerAlert(`Editing DNS for ${d.domainName}`)} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 border border-gray-200 font-extrabold text-[11px]">Edit</button>
-                                <button onClick={() => setDomains(domains.filter(item => item.id !== d.id))} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[11px]">Delete</button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ==========================================
-                  6. MANAGEMENT SERVICES SECTION
-                 ========================================== */}
-              {activeMenu === "management" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-extrabold text-gray-900">Management Services Tracking</h2>
-                    <p className="text-xs text-gray-500">Track Email Management, Complete Setup, and Admin Panel Setup fulfillment.</p>
-                  </div>
-
-                  <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 font-extrabold uppercase border-b border-gray-200">
-                          <th className="p-4">Customer</th>
-                          <th className="p-4">Service</th>
-                          <th className="p-4">Assigned Engineer</th>
-                          <th className="p-4">Status</th>
-                          <th className="p-4 text-right">Completed Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
-                        {managedServices.map((ms) => (
-                          <tr key={ms.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-bold text-gray-900">{ms.customer}</td>
-                            <td className="p-4 font-bold text-blue-700">{ms.service}</td>
-                            <td className="p-4 text-gray-700 font-semibold">{ms.engineer}</td>
-                            <td className="p-4"><span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${ms.status === "Completed" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>{ms.status}</span></td>
-                            <td className="p-4 text-right font-mono text-gray-500">{ms.completedDate}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ==========================================
-                  7. EMAIL BACKUP SECTION
-                 ========================================== */}
-              {activeMenu === "backup" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-extrabold text-gray-900">Email Backup Subscriptions</h2>
-                    <p className="text-xs text-gray-500">Track automated daily backups, storage quotas, and renewal dates.</p>
-                  </div>
-
-                  <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 font-extrabold uppercase border-b border-gray-200">
-                          <th className="p-4">Customer</th>
-                          <th className="p-4">Provider</th>
-                          <th className="p-4">Backup Enabled</th>
-                          <th className="p-4">Storage Used</th>
-                          <th className="p-4 text-right">Renewal Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
-                        {backups.map((bk) => (
-                          <tr key={bk.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-bold text-gray-900">{bk.customer}</td>
-                            <td className="p-4">{bk.provider}</td>
-                            <td className="p-4"><span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${bk.enabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"}`}>{bk.enabled ? "Yes (Active)" : "No"}</span></td>
-                            <td className="p-4 font-extrabold text-blue-700">{bk.storageUsed}</td>
-                            <td className="p-4 text-right font-mono text-gray-500">{bk.renewalDate}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ==========================================
-                  8. SUPPORT TICKETS SECTION
-                 ========================================== */}
-              {activeMenu === "tickets" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-extrabold text-gray-900">Support SLA Tickets</h2>
-                    <p className="text-xs text-gray-500">Manage customer support tickets, priority SLAs, and engineer replies.</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {tickets.map((t) => (
-                      <div key={t.id} className="p-6 rounded-3xl bg-white border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-bold text-blue-700">{t.ticketNo}</span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">{t.priority} Priority</span>
-                          </div>
-                          <div className="text-base font-extrabold text-gray-900">{t.subject}</div>
-                          <div className="text-xs text-gray-500">Customer: <strong className="text-gray-800">{t.customer}</strong></div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => triggerAlert(`Replying to ${t.ticketNo}`)} className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 text-white font-extrabold text-xs">Reply</button>
-                          <button onClick={() => {
-                            setTickets(tickets.map(item => item.id === t.id ? { ...item, status: "Resolved" } : item));
-                            triggerAlert(`Ticket ${t.ticketNo} marked Resolved`);
-                          }} className="px-3 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs">Mark Resolved</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ==========================================
-                  9. INVOICES SECTION
-                 ========================================== */}
-              {activeMenu === "invoices" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-extrabold text-gray-900">Billing Invoices</h2>
-                    <p className="text-xs text-gray-500">Download customer PDF tax invoices and track payment statuses.</p>
-                  </div>
-
-                  <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 font-extrabold uppercase border-b border-gray-200">
-                          <th className="p-4">Invoice No</th>
-                          <th className="p-4">Customer</th>
-                          <th className="p-4">Amount</th>
-                          <th className="p-4">Status</th>
-                          <th className="p-4 text-right">Download</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 text-gray-800 font-medium">
-                        {invoices.map((inv) => (
-                          <tr key={inv.id} className="hover:bg-gray-50">
-                            <td className="p-4 font-bold text-gray-900 font-mono">{inv.invoiceNo}</td>
-                            <td className="p-4 font-semibold">{inv.customer}</td>
-                            <td className="p-4 font-extrabold text-emerald-700">{inv.amount}</td>
-                            <td className="p-4"><span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${inv.status === "Paid" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"}`}>{inv.status}</span></td>
-                            <td className="p-4 text-right">
-                              <button onClick={() => triggerAlert(`Downloading PDF for ${inv.invoiceNo}...`)} className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 hover:from-black hover:to-blue-950 text-white font-extrabold text-[11px] flex items-center gap-1.5 ml-auto">
-                                <Download className="w-3.5 h-3.5" />
-                                <span>Download PDF</span>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
                 </div>
               )}
 
@@ -1973,13 +1742,23 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Phone Number</label>
                         <input
                           type="text"
                           value={settings.phone}
                           onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">WhatsApp Number</label>
+                        <input
+                          type="text"
+                          value={settings.whatsapp}
+                          onChange={(e) => setSettings({ ...settings, whatsapp: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:bg-white"
                         />
                       </div>
@@ -2034,547 +1813,9 @@ export default function AdminPage() {
         </div>
       )}
 
+
+
       {/* ==========================================
-          REDESIGNED PREMIUM CREATE RESELLER WIZARD MODAL
-         ========================================== */}
-      <AnimatePresence>
-        {isCreateResellerModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-md animate-fadeIn">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 15 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-white rounded-3xl max-w-5xl lg:max-w-6xl w-full h-[88vh] min-h-[620px] shadow-2xl border border-gray-200 overflow-hidden flex flex-col md:flex-row relative"
-            >
-              {/* --- LEFT STEPPER SIDEBAR (NAVY THEME) --- */}
-              <div className="w-full md:w-72 bg-[#0B1437] text-white p-7 flex flex-col justify-between shrink-0 border-b md:border-b-0 md:border-r border-slate-800">
-                <div className="space-y-6">
-
-                  {/* Modal Header Badge */}
-                  <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-extrabold uppercase tracking-wider mb-2">
-                      <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>Reseller Provisioning</span>
-                    </div>
-                    <h3 className="text-lg font-black text-white leading-snug">New Reseller Partner</h3>
-                  </div>
-
-                  {/* Vertical Stepper Steps List */}
-                  <div className="space-y-2 text-xs font-bold">
-                    {[
-                      { id: "basic", step: "01", label: "Basic Contact", icon: Building },
-                      { id: "business", step: "02", label: "Business Tax Info", icon: Briefcase },
-                      { id: "account", step: "03", label: "Account & Credit", icon: CreditCard },
-                      { id: "pricing", step: "04", label: "Wholesale Pricing", icon: Percent },
-                      { id: "providers", step: "05", label: "Provider Perms", icon: Server },
-                      { id: "services", step: "06", label: "Service Perms", icon: Zap },
-                    ].map((st) => {
-                      const Icon = st.icon;
-                      const isActive = resellerModalTab === st.id;
-                      return (
-                        <button
-                          key={st.id}
-                          type="button"
-                          onClick={() => setResellerModalTab(st.id as any)}
-                          className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all text-left ${isActive
-                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30"
-                            : "text-slate-400 hover:text-white hover:bg-white/10"
-                            }`}
-                        >
-                          <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 ${isActive ? "bg-white text-indigo-900" : "bg-slate-800 text-slate-300"
-                            }`}>
-                            {st.step}
-                          </div>
-                          <span className="truncate">{st.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Sidebar Footer Info */}
-                <div className="hidden md:block pt-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
-                  <div className="font-bold text-slate-300">Preset Wholesale Tier</div>
-                  <div>Automated account creation and billing entitlement</div>
-                </div>
-              </div>
-
-              {/* --- RIGHT FORM CONTENT AREA --- */}
-              <div className="flex-1 flex flex-col min-w-0 bg-white p-6 sm:p-8 justify-between overflow-y-auto">
-
-                <form onSubmit={handleCreateReseller} className="space-y-6 text-xs font-semibold flex-1 flex flex-col justify-between">
-
-                  <div>
-                    {/* Header bar with close button */}
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
-                      <div>
-                        <h4 className="text-lg font-black text-gray-900">
-                          {resellerModalTab === "basic" && "1. Basic Contact & Login Details"}
-                          {resellerModalTab === "business" && "2. Business Tax & Legal Information"}
-                          {resellerModalTab === "account" && "3. Account Tier & Credit Settings"}
-                          {resellerModalTab === "pricing" && "4. Custom Wholesale Pricing Agreement"}
-                          {resellerModalTab === "providers" && "5. Authorized Provider Permissions"}
-                          {resellerModalTab === "services" && "6. Authorized Service Entitlements"}
-                        </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          Fill out the details to provision this partner account
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsCreateResellerModalOpen(false)}
-                        className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center font-bold shrink-0"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* --- STEP 1: BASIC CONTACT & ADDRESS --- */}
-                    {resellerModalTab === "basic" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Company Name *</label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="e.g. Apex Cloud Solutions"
-                              value={newResellerData.companyName}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, companyName: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Contact Person *</label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="e.g. Vikram Malhotra"
-                              value={newResellerData.contactPerson}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, contactPerson: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Email Address *</label>
-                            <input
-                              type="email"
-                              required
-                              placeholder="reseller@apexcloud.in"
-                              value={newResellerData.email}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, email: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Password *</label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Reseller@12345"
-                              value={newResellerData.password}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, password: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Mobile Number *</label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="+91 99887 76655"
-                              value={newResellerData.mobileNumber}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, mobileNumber: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Country *</label>
-                            <input
-                              type="text"
-                              required
-                              value={newResellerData.country}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, country: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">State</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Haryana"
-                              value={newResellerData.state}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, state: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">City</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Gurugram"
-                              value={newResellerData.city}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, city: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Address</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. DLF Cyber City, Tower 8B"
-                            value={newResellerData.address}
-                            onChange={(e) => setNewResellerData({ ...newResellerData, address: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* --- STEP 2: BUSINESS TAX INFORMATION --- */}
-                    {resellerModalTab === "business" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <p className="text-xs text-gray-500 mb-2">Tax and corporate registration details for billing compliance.</p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">GST Number</label>
-                            <input
-                              type="text"
-                              placeholder="07AAAAA0000A1Z5"
-                              value={newResellerData.gstNumber}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, gstNumber: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">PAN Number</label>
-                            <input
-                              type="text"
-                              placeholder="ABCDE1234F"
-                              value={newResellerData.panNumber}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, panNumber: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Company Reg No.</label>
-                            <input
-                              type="text"
-                              placeholder="U72200HR2022PTC101"
-                              value={newResellerData.companyRegNo}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, companyRegNo: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-indigo-600 focus:bg-white"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* --- STEP 3: ACCOUNT & CREDIT SETTINGS --- */}
-                    {resellerModalTab === "account" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Reseller ID</label>
-                            <input
-                              type="text"
-                              readOnly
-                              value={newResellerData.resellerId}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-100 border border-gray-200 text-xs font-bold text-indigo-700 font-mono"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Status</label>
-                            <select
-                              value={newResellerData.status}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, status: e.target.value as any })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 focus:outline-none"
-                            >
-                              <option value="Active">Active</option>
-                              <option value="Suspended">Suspended</option>
-                              <option value="Pending Verification">Pending Verification</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Account Type</label>
-                            <select
-                              value={newResellerData.accountType}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, accountType: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 focus:outline-none"
-                            >
-                              <option value="Gold Partner">Gold Partner Tier</option>
-                              <option value="Silver Partner">Silver Partner Tier</option>
-                              <option value="Platinum Partner">Platinum Partner Tier</option>
-                              <option value="Standard">Standard Tier</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Credit Limit (₹)</label>
-                            <input
-                              type="number"
-                              placeholder="50000"
-                              value={newResellerData.creditLimit}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, creditLimit: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Global Discount (%)</label>
-                            <input
-                              type="number"
-                              placeholder="15"
-                              value={newResellerData.discountPercent}
-                              onChange={(e) => setNewResellerData({ ...newResellerData, discountPercent: e.target.value })}
-                              className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-extrabold uppercase text-gray-700 mb-1">Internal Admin Notes</label>
-                          <textarea
-                            rows={3}
-                            placeholder="Internal notes about agreement terms..."
-                            value={newResellerData.notes}
-                            onChange={(e) => setNewResellerData({ ...newResellerData, notes: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* --- STEP 4: CUSTOM WHOLESALE PRICING --- */}
-                    {resellerModalTab === "pricing" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900">
-                          <strong>Custom Wholesale Rates:</strong> Set customized wholesale rates for this specific reseller.
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                            <div>
-                              <div className="font-extrabold text-gray-900">Google Workspace</div>
-                              <div className="text-[11px] text-gray-500 font-semibold">Business Starter Plan</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-500 font-bold">₹</span>
-                              <input
-                                type="number"
-                                value={newResellerData.pricing.googleStarter}
-                                onChange={(e) => setNewResellerData({
-                                  ...newResellerData,
-                                  pricing: { ...newResellerData.pricing, googleStarter: e.target.value }
-                                })}
-                                className="w-24 px-3 py-2 rounded-xl border border-gray-300 text-xs font-extrabold text-gray-900 focus:outline-none"
-                              />
-                              <span className="text-[11px] text-gray-500 font-bold">/ user / mo</span>
-                            </div>
-                          </div>
-
-                          <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                            <div>
-                              <div className="font-extrabold text-gray-900">Microsoft 365</div>
-                              <div className="text-[11px] text-gray-500 font-semibold">Business Basic Plan</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-500 font-bold">₹</span>
-                              <input
-                                type="number"
-                                value={newResellerData.pricing.microsoftBasic}
-                                onChange={(e) => setNewResellerData({
-                                  ...newResellerData,
-                                  pricing: { ...newResellerData.pricing, microsoftBasic: e.target.value }
-                                })}
-                                className="w-24 px-3 py-2 rounded-xl border border-gray-300 text-xs font-extrabold text-gray-900 focus:outline-none"
-                              />
-                              <span className="text-[11px] text-gray-500 font-bold">/ user / mo</span>
-                            </div>
-                          </div>
-
-                          <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                            <div>
-                              <div className="font-extrabold text-gray-900">Zoho Mail</div>
-                              <div className="text-[11px] text-gray-500 font-semibold">Workplace Standard Plan</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-500 font-bold">₹</span>
-                              <input
-                                type="number"
-                                value={newResellerData.pricing.zohoWorkplace}
-                                onChange={(e) => setNewResellerData({
-                                  ...newResellerData,
-                                  pricing: { ...newResellerData.pricing, zohoWorkplace: e.target.value }
-                                })}
-                                className="w-24 px-3 py-2 rounded-xl border border-gray-300 text-xs font-extrabold text-gray-900 focus:outline-none"
-                              />
-                              <span className="text-[11px] text-gray-500 font-bold">/ user / mo</span>
-                            </div>
-                          </div>
-
-                          <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between">
-                            <div>
-                              <div className="font-extrabold text-gray-900">Titan Mail</div>
-                              <div className="text-[11px] text-gray-500 font-semibold">Business Lite Plan</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-500 font-bold">₹</span>
-                              <input
-                                type="number"
-                                value={newResellerData.pricing.titanLite}
-                                onChange={(e) => setNewResellerData({
-                                  ...newResellerData,
-                                  pricing: { ...newResellerData.pricing, titanLite: e.target.value }
-                                })}
-                                className="w-24 px-3 py-2 rounded-xl border border-gray-300 text-xs font-extrabold text-gray-900 focus:outline-none"
-                              />
-                              <span className="text-[11px] text-gray-500 font-bold">/ user / mo</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* --- STEP 5: PROVIDER PERMISSIONS --- */}
-                    {resellerModalTab === "providers" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <p className="text-xs text-gray-500">Choose which official email providers this reseller is authorized to sell.</p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {[
-                            { key: "googleWorkspace", label: "Google Workspace" },
-                            { key: "microsoft365", label: "Microsoft 365" },
-                            { key: "zohoMail", label: "Zoho Mail" },
-                            { key: "titanMail", label: "Titan Mail" },
-                            { key: "rediffmail", label: "Rediffmail Pro" },
-                          ].map((item) => (
-                            <label key={item.key} className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
-                              <span className="font-bold text-gray-900">{item.label}</span>
-                              <input
-                                type="checkbox"
-                                checked={(newResellerData.providerPermissions as any)[item.key]}
-                                onChange={(e) => setNewResellerData({
-                                  ...newResellerData,
-                                  providerPermissions: {
-                                    ...newResellerData.providerPermissions,
-                                    [item.key]: e.target.checked
-                                  }
-                                })}
-                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
-                              />
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* --- STEP 6: SERVICE PERMISSIONS --- */}
-                    {resellerModalTab === "services" && (
-                      <div className="space-y-4 animate-fadeIn">
-                        <p className="text-xs text-gray-500">Choose which value-added services this reseller can offer to clients.</p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {[
-                            { key: "businessEmail", label: "Business Email Seats" },
-                            { key: "emailMigration", label: "Email Migration Services" },
-                            { key: "emailBackup", label: "Email Backup & Archiving" },
-                            { key: "hybridSolutions", label: "Hybrid Solutions (Cross-Tenant)" },
-                            { key: "domainRegistration", label: "Domain Registration" },
-                            { key: "managementServices", label: "Management Services" },
-                          ].map((item) => (
-                            <label key={item.key} className="p-4 rounded-2xl bg-gray-50 border border-gray-200 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors">
-                              <span className="font-bold text-gray-900">{item.label}</span>
-                              <input
-                                type="checkbox"
-                                checked={(newResellerData.servicePermissions as any)[item.key]}
-                                onChange={(e) => setNewResellerData({
-                                  ...newResellerData,
-                                  servicePermissions: {
-                                    ...newResellerData.servicePermissions,
-                                    [item.key]: e.target.checked
-                                  }
-                                })}
-                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
-                              />
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Step Navigation Controls Footer */}
-                  <div className="pt-4 border-t border-gray-200 flex items-center justify-between gap-4 mt-6">
-                    <div className="flex items-center gap-2">
-                      {resellerModalTab !== "basic" && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const steps = ["basic", "business", "account", "pricing", "providers", "services"];
-                            const currentIdx = steps.indexOf(resellerModalTab);
-                            if (currentIdx > 0) setResellerModalTab(steps[currentIdx - 1] as any);
-                          }}
-                          className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-extrabold text-xs hover:bg-gray-200 transition-colors"
-                        >
-                          ← Previous
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      {resellerModalTab !== "services" ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const steps = ["basic", "business", "account", "pricing", "providers", "services"];
-                            const currentIdx = steps.indexOf(resellerModalTab);
-                            if (currentIdx < steps.length - 1) setResellerModalTab(steps[currentIdx + 1] as any);
-                          }}
-                          className="px-5 py-2.5 rounded-xl bg-slate-800 text-white font-extrabold text-xs hover:bg-slate-900 transition-colors"
-                        >
-                          Next Step →
-                        </button>
-                      ) : null}
-
-                      <button
-                        type="submit"
-                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0B1437] to-blue-900 hover:from-black hover:to-blue-950 text-white font-extrabold text-xs shadow-md active:scale-95 transition-all"
-                      >
-                        Create Reseller Account
-                      </button>
-                    </div>
-                  </div>
-
-                </form>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-       {/* ==========================================
           ENQUIRY DETAILS POPUP MODAL (REDESIGNED UI)
          ========================================== */}
       {selectedEnquiryModal && (
@@ -2646,6 +1887,95 @@ export default function AdminPage() {
 
             {/* Main Content Body */}
             {(() => {
+              const isGeneralEnquiry =
+                (selectedEnquiryModal.provider || "").toLowerCase().includes("general") ||
+                (selectedEnquiryModal.plan || "").toLowerCase().includes("inquiry") ||
+                (selectedEnquiryModal.plan || "").toLowerCase().includes("general") ||
+                selectedEnquiryModal.organization_name === "Direct Web Enquiry";
+
+              const rawPhoneDigits = (selectedEnquiryModal.phone_number || "").replace(/\D/g, "");
+              const whatsappDigits = rawPhoneDigits.length === 10 ? `91${rawPhoneDigits}` : rawPhoneDigits;
+
+              if (isGeneralEnquiry) {
+                return (
+                  <div className="space-y-6 text-xs">
+                    <div className="p-6 rounded-3xl bg-slate-900 text-white space-y-5 shadow-xl border border-slate-800 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-3.5 relative z-10">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-400/30 flex items-center justify-center shrink-0">
+                            <User className="w-4.5 h-4.5" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-extrabold text-white">General Business Enquiry</h4>
+                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Client Contact & Notes Details</span>
+                          </div>
+                        </div>
+                        <span className="px-3.5 py-1 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-wider shadow-xs">
+                          General Enquiry
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
+                        {/* Name */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Client Name</span>
+                          <div className="text-sm font-black text-white">
+                            {selectedEnquiryModal.first_name} {selectedEnquiryModal.last_name !== "Customer" ? selectedEnquiryModal.last_name : ""}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">Contact Person</div>
+                        </div>
+
+                        {/* Plan Type (New Plan vs Renew Plan) */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Type</span>
+                          <div className="text-sm font-black text-white">
+                            <span className={` py-0.5 rounded text-sm font-extrabold uppercase}`}>
+                              {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">
+                            {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "License Renewal" : "Fresh Setup"}
+                          </div>
+                        </div>
+
+                        {/* Phone */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Phone Number</span>
+                          <div className="text-sm font-black text-white-400">
+                            {selectedEnquiryModal.phone_number?.startsWith("+91") ? selectedEnquiryModal.phone_number : `+91 ${selectedEnquiryModal.phone_number}`}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">Mobile (India +91)</div>
+                        </div>
+
+                        {/* Email */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Email Address</span>
+                          <div className="text-sm font-black text-white-300 truncate" title={selectedEnquiryModal.email}>
+                            {selectedEnquiryModal.email}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">Primary Email</div>
+                        </div>
+                      </div>
+
+                      {/* Notes / Message */}
+                      <div className="bg-slate-950/90 p-4.5 rounded-2xl border border-slate-800 space-y-2 relative z-10">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Client Enquiry Message / Notes</span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-200 font-medium leading-relaxed whitespace-pre-wrap">
+                          {selectedEnquiryModal.notes || "No message notes provided."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               const matchedPlan = (() => {
                 if (!adminProvidersList || adminProvidersList.length === 0) return null;
 
@@ -2729,6 +2059,9 @@ export default function AdminPage() {
                         <div>
                           <h4 className="text-sm sm:text-base font-extrabold text-white">{planTitle}</h4>
                           <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Customer Interest Plan Details</span>
+                          <div className="text-xs font-mono font-bold text-indigo-300 truncate" title={planIdDisplay}>
+                            {planIdDisplay}
+                          </div>
                         </div>
                       </div>
                       <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-wider shadow-xs">
@@ -2736,8 +2069,8 @@ export default function AdminPage() {
                       </span>
                     </div>
 
-                    {/* 4 Primary Customer Interest Fields */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs relative z-10">
+                    {/* 5 Primary Customer Interest Fields including Plan Purchase Type */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs relative z-10">
                       {/* Provider Name */}
                       <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Provider Name</span>
@@ -2747,26 +2080,37 @@ export default function AdminPage() {
 
                       {/* Provider Subtitle */}
                       <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Provider Subtitle</span>
-                        <div className="text-sm font-black text-blue-300">{providerSubtitleDisplay}</div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block"> Subtitle</span>
+                        <div className="text-sm font-black text-white-300">{providerSubtitleDisplay}</div>
                         <div className="text-[10px] text-slate-400 font-medium">Plan Tier</div>
+                      </div>
+
+                      {/* Plan Purchase Type (New vs Renew) */}
+                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Type</span>
+
+                        <div className="text-sm font-black text-white-300">{String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}</div>
+                        {/* <span className={`px-2 py-0.5 border rounded text-xs font-black uppercase tracking-wider ${String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew"
+                            ? "bg-black-600 text-white"
+                            : "bg-blue-600 text-white"
+                            }`}>
+                            {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}
+                          </span> */}
+
+                        <div className="text-[10px] text-slate-400 font-medium">
+                          {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "License Renewal" : "Fresh Setup"}
+                        </div>
                       </div>
 
                       {/* Plan Price */}
                       <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Price</span>
-                        <div className="text-sm font-black text-emerald-400">{priceDisplay}</div>
+                        <div className="text-sm font-black text-white-400">{priceDisplay}</div>
                         <div className="text-[10px] text-slate-400 font-medium">Billed annually</div>
                       </div>
 
                       {/* Plan ID */}
-                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan ID</span>
-                        <div className="text-xs font-mono font-bold text-indigo-300 truncate" title={planIdDisplay}>
-                          {planIdDisplay}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-medium">Unique Plan Reference</div>
-                      </div>
+
                     </div>
                   </div>
 
@@ -2840,6 +2184,15 @@ export default function AdminPage() {
                       <div className="space-y-1 text-gray-700 text-xs">
                         <div><strong>Company:</strong> {selectedEnquiryModal.organization_name}</div>
                         <div><strong>Domain:</strong> <span className="text-blue-600 font-bold">{selectedEnquiryModal.domain}</span></div>
+                        <div>
+                          <strong>Plan Purchase Type:</strong>{" "}
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew"
+                            ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                            : "bg-blue-100 text-blue-800 border border-blue-200"
+                            }`}>
+                            {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan (Renewal)" : "New Plan (Fresh Setup)"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -2894,30 +2247,47 @@ export default function AdminPage() {
                 Enquiry Received: {selectedEnquiryModal.created_at ? new Date(selectedEnquiryModal.created_at).toLocaleString() : "Recently"}
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <a
-                  href={`mailto:${selectedEnquiryModal.email}`}
-                  className="px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold border border-blue-200 transition-colors flex items-center gap-1.5 justify-center flex-1 sm:flex-none"
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Send Email</span>
-                </a>
-                <a
-                  href={`tel:${selectedEnquiryModal.phone_number}`}
-                  className="px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold border border-emerald-200 transition-colors flex items-center gap-1.5 justify-center flex-1 sm:flex-none"
-                >
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>Call Contact</span>
-                </a>
-                <button
-                  onClick={() => handleDeleteEnquiry(selectedEnquiryModal.enquiry_id || selectedEnquiryModal.id)}
-                  className="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold border border-rose-200 transition-all flex items-center gap-1.5 justify-center shrink-0 active:scale-95"
-                  title="Delete Enquiry Record"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                  <span>Delete</span>
-                </button>
-              </div>
+              {(() => {
+                const rawDigits = (selectedEnquiryModal.phone_number || "").replace(/\D/g, "");
+                const waNumber = rawDigits.length === 10 ? `91${rawDigits}` : rawDigits;
+                return (
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                    <a
+                      href={`mailto:${selectedEnquiryModal.email}`}
+                      className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold border border-blue-200 transition-colors flex items-center gap-1.5 justify-center active:scale-95"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Send Email</span>
+                    </a>
+                    <a
+                      href={`tel:${selectedEnquiryModal.phone_number}`}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold border border-emerald-200 transition-colors flex items-center gap-1.5 justify-center active:scale-95"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Call Contact</span>
+                    </a>
+                    {waNumber && (
+                      <a
+                        href={`https://wa.me/${waNumber}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3.5 py-2 rounded-xl bg-green-50 hover:bg-green-100 text-green-700 font-extrabold border border-green-200 transition-colors flex items-center gap-1.5 justify-center active:scale-95"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-green-600" />
+                        <span>WhatsApp</span>
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleDeleteEnquiry(selectedEnquiryModal.enquiry_id || selectedEnquiryModal.id)}
+                      className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold border border-rose-200 transition-all flex items-center gap-1.5 justify-center shrink-0 active:scale-95"
+                      title="Delete Enquiry Record"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </motion.div>
         </div>
@@ -2936,7 +2306,7 @@ export default function AdminPage() {
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="relative bg-white w-full max-w-2xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200 z-10 overflow-hidden space-y-6 max-h-[90vh] overflow-y-auto"
+            className="relative bg-white w-full max-w-4xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200 z-10 overflow-hidden space-y-6 max-h-[90vh] overflow-y-auto"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -2964,7 +2334,7 @@ export default function AdminPage() {
 
             {/* Form */}
             <form onSubmit={handleSaveProviderSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                 {/* 1. Provider Name Dropdown */}
                 <div>
                   <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
@@ -2978,7 +2348,6 @@ export default function AdminPage() {
                       let derivedLogo = "google";
                       if (selectedName.includes("Google")) derivedLogo = "google";
                       else if (selectedName.includes("Microsoft")) derivedLogo = "microsoft";
-                      else if (selectedName.includes("Zoho")) derivedLogo = "zoho";
                       else if (selectedName.includes("Rediff")) derivedLogo = "rediff";
                       else if (selectedName.includes("Titan")) derivedLogo = "titan";
 
@@ -2992,53 +2361,108 @@ export default function AdminPage() {
                   >
                     <option value="Google Workspace">Google Workspace</option>
                     <option value="Microsoft 365">Microsoft 365</option>
-                    <option value="Zoho Mail">Zoho Mail</option>
                     <option value="Rediffmail Pro">Rediffmail Pro</option>
                     <option value="Titan Mail">Titan Mail</option>
                   </select>
                 </div>
 
-                {/* 2. Subtitle Plan Dropdown */}
+                {/* 2. Subtitle Plan Dropdown (datalist - allows manual entry) */}
                 <div>
                   <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
                     Subtitle Plan <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    list="subtitleOptions"
                     value={providerFormData.subtitle}
                     onChange={(e) => setProviderFormData({ ...providerFormData, subtitle: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 cursor-pointer"
-                  >
-                    <option value="Base Plan">Base Plan</option>
-                    <option value="Starter Plan">Starter Plan</option>
-                    <option value="Standard Plan">Standard Plan</option>
-                    {providerFormData.subtitle &&
-                      !["Base Plan", "Starter Plan", "Standard Plan"].includes(providerFormData.subtitle) && (
-                        <option value={providerFormData.subtitle}>{providerFormData.subtitle}</option>
+                    placeholder="Select or type subtitle"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600"
+                  />
+
+                  <datalist id="subtitleOptions">
+                    {[
+                      "Starter",
+                      "Standard",
+                      "Business Basic",
+                      "Business Standard",
+                      "Business Premium",
+                      "Business",
+                      "Professional",
+                      "Enterprise",
+                    ].map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                    {providerFormData.subtitle && ![
+                      "Starter",
+                      "Standard",
+                      "Business Basic",
+                      "Business Standard",
+                      "Business Premium",
+                      "Business",
+                      "Professional",
+                      "Enterprise",
+                    ].includes(providerFormData.subtitle) && (
+                        <option key="custom" value={providerFormData.subtitle} />
                       )}
-                  </select>
+                  </datalist>
                 </div>
 
-                {/* 3. Badge Tag */}
+                {/* 2b. NEW Teams Option Dropdown (Standalone for Microsoft 365) */}
+                {providerFormData.name.includes("Microsoft") && (
+                  <div>
+                    <label className="block text-xs font-extrabold text-blue-900 uppercase mb-1">
+                      Microsoft Teams Option
+                    </label>
+                    <select
+                      value={teamsOption}
+                      onChange={(e) => setTeamsOption(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl bg-blue-50 border border-blue-300 text-xs font-extrabold text-blue-900 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                    >
+                      <option value="With Teams">With Teams Plan</option>
+                      <option value="Without Teams">Without Teams Plan</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* 3. Badge Tag Dropdown */}
                 <div>
                   <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
                     Badge Highlight Tag
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={providerFormData.badge}
                     onChange={(e) => setProviderFormData({ ...providerFormData, badge: e.target.value })}
-                    placeholder="e.g. Best for Startups"
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600"
-                  />
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-900 focus:outline-none focus:border-blue-600 cursor-pointer"
+                  >
+                    <option value="">-- Select Badge Tag --</option>
+                    {providerBadges.map((b) => (
+                      <option key={b.id} value={b.title}>
+                        {b.title}
+                      </option>
+                    ))}
+                    {providerFormData.badge &&
+                      !providerBadges.some((b) => b.title === providerFormData.badge) && (
+                        <option value={providerFormData.badge}>{providerFormData.badge}</option>
+                      )}
+                  </select>
                 </div>
 
                 {/* 4. Price (Numeric Only + Static Rupee Symbol Prefix) */}
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
-                    Price <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1 flex items-center justify-between">
+                    <span>Price <span className="text-rose-500">*</span></span>
+                    {providerPriceError && (
+                      <span className="text-[11px] font-extrabold text-rose-600 lowercase font-mono">
+                        (invalid price)
+                      </span>
+                    )}
                   </label>
                   <div className="flex items-center">
-                    <span className="px-3.5 py-3 rounded-l-xl bg-gray-200 border border-r-0 border-gray-300 text-xs font-black text-gray-800 shrink-0">
+                    <span className={`px-3.5 py-3 rounded-l-xl border border-r-0 text-xs font-black shrink-0 transition-colors ${providerPriceError
+                      ? "bg-rose-100 border-rose-500 text-rose-800"
+                      : "bg-gray-200 border-gray-300 text-gray-800"
+                      }`}>
                       ₹
                     </span>
                     <input
@@ -3047,13 +2471,31 @@ export default function AdminPage() {
                       inputMode="decimal"
                       value={providerFormData.price}
                       onChange={(e) => {
-                        const decimalOnly = e.target.value.replace(/[^\d.]/g, "").replace(/(\..*?)\..*/g, "$1");
-                        setProviderFormData({ ...providerFormData, price: decimalOnly });
+                        const val = e.target.value.replace(/[^\d.]/g, "").replace(/(\..*?)\..*/g, "$1");
+                        setProviderFormData({ ...providerFormData, price: val });
+                        const num = parseFloat(val);
+                        if (!val) {
+                          setProviderPriceError("Price is required.");
+                        } else if (isNaN(num) || num < 1) {
+                          setProviderPriceError("Price cannot be less than ₹1.");
+                        } else {
+                          setProviderPriceError("");
+                        }
                       }}
                       placeholder="100"
-                      className="w-full px-4 py-3 rounded-r-xl bg-gray-50 border border-gray-200 text-xs font-extrabold text-gray-900 focus:outline-none focus:border-blue-600"
+                      className={`w-full px-4 py-3 rounded-r-xl border text-xs font-extrabold transition-colors focus:outline-none ${providerPriceError
+                        ? "bg-rose-50/70 border-rose-500 text-rose-900 focus:border-rose-600 focus:ring-2 focus:ring-rose-200"
+                        : "bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-600"
+                        }`}
                     />
                   </div>
+
+                  {providerPriceError && (
+                    <p className="text-[11px] text-rose-600 mt-1.5 font-extrabold flex items-center gap-1">
+                      <span className="text-xs">⚠️</span>
+                      <span>{providerPriceError}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* 5. Billing Period Dropdown */}
@@ -3105,9 +2547,14 @@ export default function AdminPage() {
                       placeholder="30"
                       className="w-full px-4 py-3 rounded-l-xl bg-gray-50 border border-gray-200 text-xs font-extrabold text-gray-900 focus:outline-none focus:border-blue-600"
                     />
-                    <span className="px-3.5 py-3 rounded-r-xl bg-gray-200 border border-l-0 border-gray-300 text-xs font-black text-gray-800 shrink-0">
-                      GB
-                    </span>
+                    <select
+                      value={providerFormData.storageUnit}
+                      onChange={(e) => setProviderFormData({ ...providerFormData, storageUnit: e.target.value })}
+                      className="px-3.5 py-3 rounded-r-xl bg-gray-200 border border-l-0 border-gray-300 text-xs font-black text-gray-800 shrink-0 appearance-none"
+                    >
+                      <option value="GB">GB</option>
+                      <option value="TB">TB</option>
+                    </select>
                   </div>
                 </div>
 
@@ -3129,7 +2576,7 @@ export default function AdminPage() {
                 {/* 10. Logo Type */}
                 <div>
                   <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
-                    Logo / Icon Type
+                    Logo Type
                   </label>
                   <select
                     value={providerFormData.logoType}
@@ -3138,11 +2585,28 @@ export default function AdminPage() {
                   >
                     <option value="google">Google Workspace</option>
                     <option value="microsoft">Microsoft 365</option>
-                    <option value="zoho">Zoho Mail</option>
                     <option value="rediff">Rediffmail Pro</option>
                     <option value="titan">Titan Mail</option>
-                    <option value="custom">Custom Provider</option>
                   </select>
+                </div>
+
+                {/* 10b. Homepage Visibility Toggle */}
+                <div>
+                  <label className="block text-xs font-extrabold text-gray-700 uppercase mb-1">
+                    Homepage Visibility
+                  </label>
+                  <label className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={providerFormData.showOnHome !== false}
+                      onChange={(e) => setProviderFormData({ ...providerFormData, showOnHome: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span className="text-xs font-extrabold text-gray-800 flex items-center gap-1.5">
+                      <Home className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Display on Main Homepage</span>
+                    </span>
+                  </label>
                 </div>
               </div>
 
@@ -3231,6 +2695,58 @@ export default function AdminPage() {
           </motion.div>
         </div>
       )}
+
+      {/* ==========================================
+          PREMIUM DELETE CONFIRMATION MODAL
+         ========================================== */}
+      <AnimatePresence>
+        {deleteModalState?.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 15 }}
+              className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-200 relative overflow-hidden"
+            >
+              <div className="flex flex-col items-center text-center space-y-4">
+                {/* Red Trash Warning Badge */}
+                <div className="w-14 h-14 rounded-full bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center shadow-xs">
+                  <Trash2 className="w-7 h-7" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <h3 className="text-lg font-black text-gray-900">{deleteModalState.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed max-w-sm mx-auto">
+                    {deleteModalState.description}
+                  </p>
+                </div>
+
+                {/* Modal Action Buttons */}
+                <div className="flex items-center gap-3 w-full pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteModalState(null)}
+                    className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold text-xs transition-all active:scale-95 border border-gray-200"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteModalState.onConfirm();
+                      setDeleteModalState(null);
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-md shadow-rose-600/30 transition-all active:scale-95"
+                  >
+                    Confirm Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

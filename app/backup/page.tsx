@@ -48,7 +48,7 @@ const backupFaqs: FaqItem[] = [
   },
   {
     question: "Which email and cloud platforms are supported for automated backups?",
-    answer: "We support automated cloud-to-cloud backups for Google Workspace (Gmail, Google Drive, Shared Drives), Microsoft 365 (Exchange Mail, OneDrive, Teams, SharePoint), Zoho Mail, Titan Mail, and Rediffmail Pro."
+    answer: "We support automated cloud-to-cloud backups for Google Workspace (Gmail, Google Drive, Shared Drives), Microsoft 365 (Exchange Mail, OneDrive, Teams, SharePoint), Titan Mail, and Rediffmail Pro."
   },
   {
     question: "How quickly can I restore an entire mailbox after accidental deletion or ransomware?",
@@ -98,7 +98,7 @@ export default function BackupServicesPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-slate-300 font-normal leading-relaxed mb-8">
-              Automated continuous cloud-to-cloud backups, instant PST & MBOX exports, point-in-time recovery, and ransomware isolation for Google Workspace, Microsoft 365, Zoho, & Titan.
+              Automated continuous cloud-to-cloud backups, instant PST & MBOX exports, point-in-time recovery, and ransomware isolation for Google Workspace, Microsoft 365, & Titan.
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
@@ -182,16 +182,6 @@ export default function BackupServicesPage() {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <button
-                  // onClick={() => handleOpenAuthModal("signup")}
-                  className="w-full py-3.5 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
-                >
-                  <span>Export Manual Backup Now</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
             </motion.div>
 
             {/* Capability 2: Across-Company Automated Backups */}
@@ -234,16 +224,6 @@ export default function BackupServicesPage() {
                     <span>Background multi-datacenter replication with zero PC performance drag</span>
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <button
-                  // onClick={() => handleOpenAuthModal("signup")}
-                  className="w-full py-3.5 px-4 rounded-xl bg-[#0B1437] hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
-                >
-                  <span>Enable Automated Cloud Protection</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
               </div>
             </motion.div>
 

@@ -52,7 +52,7 @@ export default function TermsOfServicePage() {
       <section className="relative pt-32 pb-16 bg-gradient-to-b from-white via-blue-50/40 to-[#F8FAFC] border-b border-slate-200/80 overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-blue-400/10 blur-[100px] rounded-full pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          
+
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold uppercase tracking-wider mb-6 shadow-sm">
             <FileText className="w-4 h-4 text-blue-600" />
             <span>Master Service Agreement</span>
@@ -82,11 +82,10 @@ export default function TermsOfServicePage() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-center transition-all ${
-                  tab.active
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
-                }`}
+                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-center transition-all ${tab.active
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  }`}
               >
                 {tab.name}
               </Link>
@@ -99,7 +98,7 @@ export default function TermsOfServicePage() {
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-          
+
           {/* Sidebar Table of Contents */}
           <aside className="hidden lg:block lg:col-span-1">
             <div className="sticky top-28 bg-white border border-slate-200/90 rounded-2xl p-5 space-y-3 shadow-sm backdrop-blur-md">
@@ -127,13 +126,7 @@ export default function TermsOfServicePage() {
                   <p className="text-slate-600 leading-relaxed">
                     Need contract clarification or custom SLA agreements?
                   </p>
-                  <a
-                    href="mailto:legal@justemail.in"
-                    className="text-blue-600 font-bold hover:underline inline-flex items-center gap-1"
-                  >
-                    legal@justemail.in
-                    <ChevronRight className="w-3 h-3" />
-                  </a>
+
                 </div>
               </div>
             </div>
@@ -141,7 +134,7 @@ export default function TermsOfServicePage() {
 
           {/* Main Legal Document Content */}
           <main className="lg:col-span-3 space-y-10 text-sm leading-relaxed text-slate-700">
-            
+
             {/* Section 1 */}
             <section id="acceptance-scope" className="scroll-mt-28 bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
               <div className="flex items-center gap-3 text-slate-900">
@@ -154,7 +147,7 @@ export default function TermsOfServicePage() {
                 By creating an account, ordering services, or provisioning mailboxes on Justemail Technologies ("Justemail", "we", "us"), you ("Customer", "Client", or "User") agree to be bound by these Terms of Service, along with our <Link href="/privacy-policy" className="text-blue-600 font-semibold underline">Privacy Policy</Link> and <Link href="/acceptable-use-policy" className="text-blue-600 font-semibold underline">Acceptable Use Policy</Link>.
               </p>
               <p>
-                Justemail provides business email provisioning, custom MX domain delegation, split-domain routing (Google Workspace, Microsoft 365, Zoho coexistence), cloud mail archiving, and domain registration services.
+                Justemail provides business email provisioning, custom MX domain delegation, split-domain routing (Google Workspace, Microsoft 365 coexistence), cloud mail archiving, and domain registration services.
               </p>
             </section>
 
@@ -303,15 +296,7 @@ export default function TermsOfServicePage() {
               <p>
                 These terms shall be governed by and construed in accordance with the laws of the Republic of India. Any disputes arising hereunder shall be subject to the exclusive jurisdiction of the courts located in Pune, Maharashtra, India.
               </p>
-              <div className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-slate-500 uppercase font-semibold">Legal Counsel Contact</div>
-                  <a href="mailto:legal@justemail.in" className="text-blue-600 font-bold hover:underline">
-                    legal@justemail.in
-                  </a>
-                </div>
-                <Mail className="w-5 h-5 text-blue-600" />
-              </div>
+
             </section>
 
           </main>

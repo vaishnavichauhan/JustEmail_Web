@@ -81,28 +81,6 @@ const providerFaqData: ProviderFaqCategory[] = [
     ]
   },
   {
-    id: "zoho",
-    name: "Zoho Mail",
-    logo: "/images/zoho-mail.png",
-    subtitle: "Budget business email & NVMe storage questions",
-    badge: "Best Value for Startups",
-    color: "border-emerald-300 bg-emerald-50/50 text-emerald-800",
-    questions: [
-      {
-        q: "Why is Zoho Mail recommended for budget-conscious startups?",
-        a: "Zoho Mail Lite starts at just ₹58 per user/month while offering dedicated 5 GB NVMe mailbox storage, custom domain address (@yourcompany.com), 100% ad-free webmail, and mobile app access."
-      },
-      {
-        q: "Is Zoho Mail ad-free and secure for corporate emails?",
-        a: "Yes! Zoho Mail is 100% ad-free and enforces strict zero-data-mining privacy policies. All stored emails are encrypted with AES-256 bit encryption and protected with AI anti-spam filtering."
-      },
-      {
-        q: "Can we create catch-all email aliases and group mailboxes in Zoho Mail?",
-        a: "Yes! You can create unlimited email aliases (e.g. sales@, info@, support@) and departmental distribution groups free of charge within your Zoho admin console."
-      }
-    ]
-  },
-  {
     id: "titan",
     name: "Titan Mail",
     logo: "/images/titan-mail.png",

@@ -4,28 +4,28 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight, Quote, ShieldCheck, Award, Building2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const clientLogos = [
-  { name: "Reliance Industries", logo: "/images/reliance.png" },
-  { name: "Infosys", logo: "/images/infosys.png" },
-  { name: "Zomato", logo: "/images/zomato.png" },
-  { name: "HDFC Bank", logo: "/images/hdfc.png" },
-  { name: "Tata Motors", logo: "/images/tata.png" },
-  { name: "Tech Mahindra", logo: "/images/techm.png" }
+  { name: "Client 1", logo: "/images/client1.png" },
+  { name: "Client 2", logo: "/images/client2.png" },
+  { name: "Client 3", logo: "/images/client3.png" },
+  { name: "Client 4", logo: "/images/client4.png" },
+  { name: "Client 5", logo: "/images/client5.png" },
+  { name: "Client 6", logo: "/images/client6.png" }
 ];
 
 const techPartners = [
-  { name: "Google Workspace", role: "Official Cloud Partner", logo: "/images/google-workspace.png" },
-  { name: "Microsoft 365", role: "CSP Tier-1 Direct Partner", logo: "/images/microsoft-365.png" },
-  { name: "Zoho Mail", role: "Authorized Enterprise Partner", logo: "/images/zoho-mail.png" },
-  { name: "Titan Mail", role: "Authorized Global Distributor", logo: "/images/titan-mail.png" },
-  { name: "Rediffmail Pro", role: "Strategic Infrastructure Partner", logo: "/images/rediffmail.png" }
+  { name: "Google Workspace", role: "Official Cloud Partner", logo: "/images/google-workspace.png", href: "/business-emails/google-workspace" },
+  { name: "Microsoft 365", role: "CSP Tier-1 Direct Partner", logo: "/images/microsoft-365.png", href: "/business-emails/microsoft-365" },
+  { name: "Titan Mail", role: "Authorized Global Distributor", logo: "/images/titan-mail.png", href: "/business-emails/titan-mail" },
+  { name: "Rediffmail Pro", role: "Strategic Infrastructure Partner", logo: "/images/rediffmail.png", href: "/business-emails/rediffmail-pro" }
 ];
 
 const testimonials = [
   {
     id: 1,
-    name: "Rajesh Sharma",
+    name: "Neha Sharma",
     role: "Chief Technology Officer",
     company: "Nexus Logistics Pvt Ltd",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
@@ -42,7 +42,7 @@ const testimonials = [
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200",
     rating: 5,
     caseStudy: "Saved 40% Annual Email Licensing Cost",
-    quote: "We switched 400 team members to Zoho Mail Workplace through justEmails. Their expert admin setup included full DKIM, SPF, and DMARC anti-phishing policies. We saved ₹12 Lakhs annually while getting superior uptime.",
+    quote: "We switched 400 team members to Titan Mail Suite through justEmails. Their expert admin setup included full DKIM, SPF, and DMARC anti-phishing policies. We saved ₹12 Lakhs annually while getting superior uptime.",
     metrics: "₹12L Annual Savings • 100% Compliance"
   },
   {
@@ -71,182 +71,187 @@ export default function SocialProofSection() {
 
   return (
     <section className="py-20 bg-white border-y border-gray-200/80 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
 
-        {/* 1. TECHNOLOGY PARTNERS BAR */}
-        <div>
-          <div className="text-center mb-8">
-            <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
-              Strategic Alliances
-            </span>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mt-2">
-              Authorized Technology Partners
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Direct cloud deployment partnerships with global email infrastructure leaders.
-            </p>
+      {/* 1. TECHNOLOGY PARTNERS BAR (CONTAINED) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <div className="text-center mb-8">
+          <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
+            Strategic Alliances
+          </span>
+          <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mt-2">
+            Authorized Technology Partners
+          </h3>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+            Direct cloud deployment partnerships with global email infrastructure leaders.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 items-center">
+          {techPartners.map((partner) => (
+            <div
+              key={partner.name}
+              className="p-6 rounded-2xl bg-gray-50/80 border border-gray-200/80 hover:border-blue-400 hover:bg-white transition-all duration-300 text-center flex flex-col items-center justify-center gap-3 group shadow-xs hover:shadow-md"
+            >
+              <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0">
+                <Image
+                  src={partner.logo}
+                  alt={partner.name}
+                  width={40}
+                  height={40}
+                  className="object-contain max-h-8 w-auto group-hover:scale-105 transition-transform"
+                />
+              </div>
+              <div>
+                <div className="text-xs font-extrabold text-gray-900 group-hover:text-blue-600 transition-colors">{partner.name}</div>
+                <div className="text-[10px] text-gray-500 font-medium">{partner.role}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. FULL SCREEN EDGE-TO-EDGE MARQUEE CLIENT LOGOS TRUST BAR */}
+      <div className="w-full bg-slate-50/80 border-y border-gray-200/80 py-10 my-16 overflow-hidden relative">
+        {/* Left & Right Gradient Fades for Edge-to-Edge Full Screen Scrolling */}
+        <div className="absolute left-0 top-0 bottom-0 w-24 sm:w-48 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-24 sm:w-48 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none" />
+
+        <div className="text-center mb-6 px-4">
+          <div className="text-xs sm:text-sm font-extrabold text-gray-500 uppercase tracking-[0.25em]">
+            TRUSTED BY 10,000+ FAST-GROWING ORGANIZATIONS ACROSS INDIA
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 items-center">
-            {techPartners.map((partner) => (
+        {/* Continuous Infinite Full-Screen Marquee Track */}
+        <div className="relative w-full overflow-hidden py-2">
+          <motion.div
+            className="flex items-center gap-8 w-max"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{
+              repeat: Infinity,
+              ease: "linear",
+              duration: 25,
+            }}
+          >
+            {[...clientLogos, ...clientLogos, ...clientLogos, ...clientLogos, ...clientLogos, ...clientLogos].map((client, idx) => (
               <div
-                key={partner.name}
-                className="p-6 rounded-2xl bg-gray-50/80 border border-gray-200/80 hover:border-blue-400 hover:bg-white transition-all duration-300 text-center flex flex-col items-center justify-center gap-3 group shadow-xs hover:shadow-md"
+                key={`${client.name}-${idx}`}
+                className="flex items-center justify-center px-8 py-4 rounded-2xl bg-white border border-gray-200/90 shrink-0 shadow-xs hover:border-blue-400 hover:shadow-md transition-all group min-w-[160px] h-20"
               >
-                <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 p-2 flex items-center justify-center shrink-0">
-                  <Image
-                    src={partner.logo}
-                    alt={partner.name}
-                    width={40}
-                    height={40}
-                    className="object-contain max-h-8 w-auto group-hover:scale-105 transition-transform"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs font-extrabold text-gray-900">{partner.name}</div>
-                  <div className="text-[10px] text-gray-500 font-medium">{partner.role}</div>
-                </div>
+                <Image
+                  src={client.logo}
+                  alt={client.name}
+                  width={160}
+                  height={56}
+                  className="max-h-12 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                />
               </div>
             ))}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* 3. CUSTOMER TESTIMONIALS SLIDER (CONTAINED) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-3 border border-emerald-100">
+            <Award className="w-3.5 h-3.5" />
+            <span>Client Success Stories</span>
           </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+            Customer Testimonials & Case Studies
+          </h2>
         </div>
 
-        {/* 2. MARQUEE CLIENT LOGOS TRUST BAR */}
-        <div className="pt-10 border-t border-gray-100 overflow-hidden">
-          <div className="text-center mb-8">
-            <div className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-1">
-              TRUSTED BY 10,000+ FAST-GROWING ORGANIZATIONS ACROSS INDIA
-            </div>
-          </div>
-
-          {/* Continuous Marquee Track */}
-          <div className="relative w-full overflow-hidden py-2">
-            <motion.div
-              className="flex items-center gap-6 w-max"
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{
-                repeat: Infinity,
-                ease: "linear",
-                duration: 25,
-              }}
-            >
-              {[...clientLogos, ...clientLogos, ...clientLogos, ...clientLogos].map((client, idx) => (
-                <div
-                  key={`${client.name}-${idx}`}
-                  className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-slate-50 border border-gray-200/80 text-xs font-extrabold text-gray-800 shrink-0 shadow-xs hover:bg-white hover:border-blue-300 transition-all"
+        {/* Testimonial Card Slider */}
+        <div className="relative max-w-4xl mx-auto">
+          <AnimatePresence mode="wait">
+            {testimonials.map((t, index) => {
+              if (index !== activeTestimonial) return null;
+              return (
+                <motion.div
+                  key={t.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="bg-[#0B1437] text-white rounded-3xl p-8 sm:p-12 border border-slate-800 shadow-2xl relative overflow-hidden"
                 >
-                  <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>{client.name}</span>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
+                  <Quote className="w-20 h-20 text-white/5 absolute -bottom-4 -right-4 pointer-events-none" />
 
-        {/* 3. CUSTOMER TESTIMONIALS SLIDER */}
-        <div className="pt-10 border-t border-gray-100">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-3 border border-emerald-100">
-              <Award className="w-3.5 h-3.5" />
-              <span>Client Success Stories</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-              Customer Testimonials & Case Studies
-            </h2>
-          </div>
-
-          {/* Testimonial Card Slider */}
-          <div className="relative max-w-4xl mx-auto">
-            <AnimatePresence mode="wait">
-              {testimonials.map((t, index) => {
-                if (index !== activeTestimonial) return null;
-                return (
-                  <motion.div
-                    key={t.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4 }}
-                    className="bg-[#0B1437] text-white rounded-3xl p-8 sm:p-12 border border-slate-800 shadow-2xl relative overflow-hidden"
-                  >
-                    <Quote className="w-20 h-20 text-white/5 absolute -bottom-4 -right-4 pointer-events-none" />
-
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={t.avatar}
-                          alt={t.name}
-                          className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-400 shadow-md"
-                        />
-                        <div>
-                          <h4 className="text-lg sm:text-xl font-extrabold">{t.name}</h4>
-                          <div className="text-xs text-blue-300 font-semibold">{t.role} • {t.company}</div>
-                        </div>
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={t.avatar}
+                        alt={t.name}
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-blue-400 shadow-md"
+                      />
+                      <div>
+                        <h4 className="text-lg sm:text-xl font-extrabold">{t.name}</h4>
+                        <div className="text-xs text-blue-300 font-semibold">{t.role} • {t.company}</div>
                       </div>
-
-                      {/* Case Study Badge */}
-                      <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                        🏆 {t.caseStudy}
-                      </span>
                     </div>
 
-                    {/* Star Rating */}
-                    <div className="flex items-center gap-1 mb-6 text-amber-400">
-                      {[...Array(t.rating)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 fill-amber-400" />
-                      ))}
-                      <span className="text-xs font-bold text-slate-300 ml-2">5.0 / 5.0 Verified Review</span>
-                    </div>
+                    {/* Case Study Badge */}
+                    <span className="px-4 py-1.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                      🏆 {t.caseStudy}
+                    </span>
+                  </div>
 
-                    {/* Quote */}
-                    <p className="text-base sm:text-lg text-slate-200 leading-relaxed italic mb-8">
-                      "{t.quote}"
-                    </p>
+                  {/* Star Rating */}
+                  <div className="flex items-center gap-1 mb-6 text-amber-400">
+                    {[...Array(t.rating)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-amber-400" />
+                    ))}
+                    <span className="text-xs font-bold text-slate-300 ml-2">5.0 / 5.0 Verified Review</span>
+                  </div>
 
-                    {/* Case Study Metrics */}
-                    <div className="pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-semibold">
-                      <span>Impact Metric: <strong className="text-emerald-400 font-extrabold">{t.metrics}</strong></span>
-                    </div>
+                  {/* Quote */}
+                  <p className="text-base sm:text-lg text-slate-200 leading-relaxed italic mb-8">
+                    "{t.quote}"
+                  </p>
 
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
+                  {/* Case Study Metrics */}
+                  <div className="pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-semibold">
+                    <span>Impact Metric: <strong className="text-emerald-400 font-extrabold">{t.metrics}</strong></span>
+                  </div>
 
-            {/* Slider Controls */}
-            <div className="flex items-center justify-center gap-4 mt-8">
-              <button
-                onClick={handlePrev}
-                className="w-11 h-11 rounded-xl bg-white border border-gray-200 text-gray-800 font-bold flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm active:scale-95"
-                title="Previous testimonial"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
-              <div className="flex items-center gap-2">
-                {testimonials.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveTestimonial(i)}
-                    className={`h-2.5 rounded-full transition-all duration-300 ${
-                      i === activeTestimonial ? "w-8 bg-blue-600" : "w-2.5 bg-gray-300"
+          {/* Slider Controls */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={handlePrev}
+              className="w-11 h-11 rounded-xl bg-white border border-gray-200 text-gray-800 font-bold flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm active:scale-95"
+              title="Previous testimonial"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveTestimonial(i)}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${i === activeTestimonial ? "w-8 bg-blue-600" : "w-2.5 bg-gray-300"
                     }`}
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={handleNext}
-                className="w-11 h-11 rounded-xl bg-white border border-gray-200 text-gray-800 font-bold flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm active:scale-95"
-                title="Next testimonial"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+                />
+              ))}
             </div>
 
+            <button
+              onClick={handleNext}
+              className="w-11 h-11 rounded-xl bg-white border border-gray-200 text-gray-800 font-bold flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm active:scale-95"
+              title="Next testimonial"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
-        </div>
 
+        </div>
       </div>
     </section>
   );

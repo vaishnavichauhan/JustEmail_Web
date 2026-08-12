@@ -11,27 +11,31 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
+import EnquiryModal from "@/components/EnquiryModal";
+
 const navItems = [
   { name: "Business Emails", href: "/business-emails" },
-  { name: "Cross-Tenant", href: "/cross-tenant" },
-  { name: "Domains", href: "/domains" },
   { name: "Management", href: "/management" },
   { name: "Backup", href: "/backup" },
+  { name: "Enquiry", href: "#enquiry", isEnquiry: true },
 ];
 
 import { useCompare } from "@/lib/compareContext";
 import { useCart } from "@/lib/cartContext";
 import { useAuthStore } from "@/lib/authStore";
-import { SlidersHorizontal, ShoppingCart, LogOut, UserCheck, CheckCircle2, ShieldCheck } from "lucide-react";
+import { SlidersHorizontal, ShoppingCart, LogOut, UserCheck, CheckCircle2, ShieldCheck, HelpCircle } from "lucide-react";
 
 export default function Navbar({
-  onOpenAuthModal
+  onOpenAuthModal,
+  onOpenEnquiryModal
 }: {
   onOpenAuthModal?: (mode: "login" | "signup") => void;
+  onOpenEnquiryModal?: () => void;
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
   const pathname = usePathname();
   const { selectedPlans } = useCompare();
   const { cartItems } = useCart();
@@ -86,12 +90,27 @@ export default function Navbar({
             {/* Middle Navbar Items */}
             <nav className="hidden lg:flex items-center gap-8">
               {navItems.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/" && item.href !== "/#cross-tenant" && pathname?.startsWith(item.href));
+                if (item.isEnquiry) {
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        setEnquiryModalOpen(true);
+                        if (onOpenEnquiryModal) onOpenEnquiryModal();
+                      }}
+                      className="text-md text-gray-700 font-medium hover:text-blue-600 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {/* <HelpCircle className="w-4 h-4 text-blue-600" /> */}
+                      <span>{item.name}</span>
+                    </button>
+                  );
+                }
+                const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`text-sm transition-colors ${isActive
+                    className={`text-md transition-colors ${isActive
                       ? "text-blue-700 font-extrabold"
                       : "text-gray-700 font-medium hover:text-gray-900"
                       }`}
@@ -199,16 +218,36 @@ export default function Navbar({
           >
             <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 space-y-4">
               <div className="space-y-1">
-                {navItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl text-base font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
-                  >
-                    <span>{item.name}</span>
-                  </a>
-                ))}
+                {navItems.map((item) => {
+                  if (item.isEnquiry) {
+                    return (
+                      <button
+                        key={item.name}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setEnquiryModalOpen(true);
+                          if (onOpenEnquiryModal) onOpenEnquiryModal();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-base font-semibold text-gray-900 hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <span className="flex items-center gap-2">
+                          <HelpCircle className="w-4 h-4 text-blue-600" />
+                          <span>{item.name}</span>
+                        </span>
+                      </button>
+                    );
+                  }
+                  return (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl text-base font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+                    >
+                      <span>{item.name}</span>
+                    </a>
+                  );
+                })}
               </div>
 
               <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
@@ -302,6 +341,12 @@ export default function Navbar({
           </div>
         )}
       </AnimatePresence>
+
+      {/* --- ENQUIRER MODAL --- */}
+      <EnquiryModal
+        isOpen={enquiryModalOpen}
+        onClose={() => setEnquiryModalOpen(false)}
+      />
     </>
   );
 }

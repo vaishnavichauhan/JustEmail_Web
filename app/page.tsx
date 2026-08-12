@@ -6,7 +6,6 @@ import Hero from "@/components/Hero";
 import BusinessEmailsSection from "@/components/BusinessEmailsSection";
 import BusinessEmailBenefitsSection from "@/components/BusinessEmailBenefitsSection";
 import HomeBackupSection from "@/components/HomeBackupSection";
-import HomeCrossTenantSection from "@/components/HomeCrossTenantSection";
 import WhyJustEmailSection from "@/components/WhyJustEmailSection";
 import SocialProofSection from "@/components/SocialProofSection";
 import HomePageFaqSection from "@/components/HomePageFaqSection";
@@ -39,9 +38,6 @@ export default function Home() {
 
       {/* 5. Backup Services Section (Never Lose an Important Email - Motion UI Flow) */}
       <HomeBackupSection />
-
-      {/* 6. Cross-Tenant Coexistence (Basic Split-Domain Info & Example) */}
-      <HomeCrossTenantSection />
 
       {/* 7. Why Justemail (Why JE) Section */}
       <WhyJustEmailSection />

@@ -8,6 +8,8 @@ import Footer from "@/components/Footer";
 import ProviderPlansSection from "@/components/ProviderPlansSection";
 import ProviderComparisonTable from "@/components/ProviderComparisonTable";
 import EnterpriseSecuritySection from "@/components/EnterpriseSecuritySection";
+import OfficialAppsSection from "@/components/OfficialAppsSection";
+
 import ProviderFaqSection from "@/components/ProviderFaqSection";
 import {
   Sparkles,
@@ -65,7 +67,7 @@ export default function BusinessEmailsPage() {
               </h1>
 
               <p className="text-base sm:text-lg text-slate-300 font-normal leading-relaxed">
-                Deploy Google Workspace, Microsoft 365, Zoho Mail, Titan, and Rediffmail Pro mailboxes under your domain with 0-downtime migration, automated DKIM/SPF setup, and 24/7 support.
+                Deploy Google Workspace, Microsoft 365, Titan, and Rediffmail Pro mailboxes under your domain with 0-downtime migration, automated DKIM/SPF setup, and 24/7 support.
               </p>
 
               {/* Action Buttons */}
@@ -129,7 +131,7 @@ export default function BusinessEmailsPage() {
               className="lg:col-span-5 flex items-center justify-center relative"
             >
               <Image
-                src="/images/business-email-3d.png"
+                src="/images/BusinessEmail.png"
                 alt="3D Business Email Infrastructure"
                 width={800}
                 height={600}
@@ -150,7 +152,10 @@ export default function BusinessEmailsPage() {
         <ProviderComparisonTable />
       </div>
 
-      {/* --- 4. ENTERPRISE SECURITY & COMPLIANCE SLA SECTION --- */}
+      {/* --- 4. APPS INCLUDED (IF APPLICABLE) SECTION --- */}
+      <OfficialAppsSection />
+
+      {/* --- 5. ENTERPRISE SECURITY & COMPLIANCE SLA SECTION --- */}
       <EnterpriseSecuritySection />
 
       {/* --- 5. PROVIDER-SPECIFIC FAQ SECTION (LEFT TABS VS RIGHT Q&A) --- */}

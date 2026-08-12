@@ -17,6 +17,7 @@ export interface EnquiryRecord {
   notes?: string;
   provider?: string;
   plan?: string;
+  plan_type?: string;
   provider_id?: string;
   user_count?: number;
   status?: string;
@@ -47,6 +48,7 @@ export const EnquiryModel = {
           notes TEXT,
           provider VARCHAR(100),
           plan VARCHAR(100),
+          plan_type VARCHAR(50) DEFAULT 'New',
           provider_id VARCHAR(100),
           user_count INT DEFAULT 1,
           status VARCHAR(20) DEFAULT 'Pending',
@@ -56,6 +58,10 @@ export const EnquiryModel = {
 
       try {
         await db.query(`ALTER TABLE enquiries ADD COLUMN provider_id VARCHAR(100) NULL`);
+      } catch (e) {}
+
+      try {
+        await db.query(`ALTER TABLE enquiries ADD COLUMN plan_type VARCHAR(50) DEFAULT 'New'`);
       } catch (e) {}
 
       try {
@@ -87,6 +93,7 @@ export const EnquiryModel = {
     notes?: string;
     provider?: string;
     plan?: string;
+    planType?: string;
     providerId?: string;
     userCount?: number;
     status?: string;
@@ -108,6 +115,7 @@ export const EnquiryModel = {
       notes: (data.notes || "").trim(),
       provider: data.provider || undefined,
       plan: data.plan || undefined,
+      plan_type: data.planType || "New",
       provider_id: data.providerId || undefined,
       user_count: Number(data.userCount) || 1,
       status: data.status || "Pending",
@@ -123,8 +131,8 @@ export const EnquiryModel = {
         `INSERT INTO enquiries (
           enquiry_id, organization_name, domain, city, state, zip, address,
           first_name, last_name, email, alternative_email, phone_number,
-          notes, provider, plan, provider_id, user_count, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          notes, provider, plan, plan_type, provider_id, user_count, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newEnquiry.enquiry_id,
           newEnquiry.organization_name,
@@ -141,6 +149,7 @@ export const EnquiryModel = {
           newEnquiry.notes,
           newEnquiry.provider || null,
           newEnquiry.plan || null,
+          newEnquiry.plan_type || "New",
           newEnquiry.provider_id || null,
           newEnquiry.user_count,
           newEnquiry.status,

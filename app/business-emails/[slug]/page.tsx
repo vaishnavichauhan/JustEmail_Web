@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/Footer";
 import { useCompare, PlanItem } from "@/lib/compareContext";
 import { useCart } from "@/lib/cartContext";
+import GoogleAppsIncludedSection from "@/components/GoogleAppsIncludedSection";
+import EnterpriseSecuritySection from "@/components/EnterpriseSecuritySection";
 import {
   Sparkles,
   ShieldCheck,
@@ -18,6 +20,8 @@ import {
   SlidersHorizontal,
   Globe,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Lock,
   Star,
   Users,
@@ -148,49 +152,6 @@ const singleProviderData: Record<string, ProviderData> = {
       }
     ]
   },
-  "zoho-mail": {
-    slug: "zoho-mail",
-    name: "Zoho Mail",
-    badge: "Official Zoho Premium Partner",
-    heroHeadline: "Ultra-Fast, Secure & Ad-Free Business Email Hosting",
-    heroSubtitle: "Get high-performance custom domain email hosting with 5 GB to 50 GB NVMe storage, zero-ads interface, and integrated Zoho Suite.",
-    logo: "/images/zoho-mail.png",
-    sla: "99.9% SLA",
-    maxStorage: "Up to 50 GB",
-    plans: [],
-    whyChoose: [
-      {
-        title: "100% Privacy & Zero-Ads Guarantee",
-        description: "Zoho Mail respects user data privacy and never scans or sells your business emails for advertising.",
-        icon: "shield"
-      },
-      {
-        title: "1 GB Huge Attachment Limit",
-        description: "Send massive files, design blueprints, and datasets up to 1 GB directly via email on Premium plans.",
-        icon: "zap"
-      },
-      {
-        title: "Integrated Zoho CRM & Workplace",
-        description: "Connect your inbox directly with Zoho CRM, Projects, Cliq chat, and Zoho Docs without extra setup.",
-        icon: "globe"
-      },
-      {
-        title: "Cost-Effective Pricing",
-        description: "Enterprise-grade email infrastructure starting at just ₹58/month, providing maximum ROI for businesses.",
-        icon: "check"
-      }
-    ],
-    faqs: [
-      {
-        question: "Is Zoho Mail suitable for small businesses?",
-        answer: "Yes! Zoho Mail is one of the most popular and affordable business email solutions in the world, ideal for teams from 1 to 10,000+ users."
-      },
-      {
-        question: "Can I access Zoho Mail on mobile devices?",
-        answer: "Yes, Zoho Mail provides dedicated native mobile apps for iOS and Android, as well as IMAP/POP3 access for Outlook and Apple Mail."
-      }
-    ]
-  },
   "rediffmail-pro": {
     slug: "rediffmail-pro",
     name: "Rediffmail Pro",
@@ -270,8 +231,6 @@ const slugAliases: Record<string, string> = {
   "google-workspace": "google-workspace",
   "microsoft": "microsoft-365",
   "microsoft-365": "microsoft-365",
-  "zoho": "zoho-mail",
-  "zoho-mail": "zoho-mail",
   "rediff": "rediffmail-pro",
   "rediffmail": "rediffmail-pro",
   "rediffmail-pro": "rediffmail-pro",
@@ -358,6 +317,7 @@ export default function SingleProviderPage({
 
   const provider = dynamicProviderData || defaultProvider;
 
+  const planCarouselRef = useRef<HTMLDivElement>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -365,6 +325,48 @@ export default function SingleProviderPage({
 
   const { toggleComparePlan, isPlanSelected } = useCompare();
   const { addToCart } = useCart();
+
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = () => {
+    if (planCarouselRef.current) {
+      const container = planCarouselRef.current;
+      const index = Math.round(container.scrollLeft / 360);
+      setActiveIndex(index);
+    }
+  };
+
+  const handleScrollLeft = () => {
+    if (planCarouselRef.current) {
+      planCarouselRef.current.scrollBy({ left: -360, behavior: "smooth" });
+    }
+  };
+
+  const handleScrollRight = () => {
+    if (planCarouselRef.current) {
+      planCarouselRef.current.scrollBy({ left: 360, behavior: "smooth" });
+    }
+  };
+
+  // Auto-scroll when more than 3 provider plans exist
+  useEffect(() => {
+    if (!provider.plans || provider.plans.length <= 3 || isCarouselPaused) return;
+
+    const interval = setInterval(() => {
+      if (planCarouselRef.current) {
+        const container = planCarouselRef.current;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        if (container.scrollLeft >= maxScrollLeft - 10) {
+          container.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          container.scrollBy({ left: 360, behavior: "smooth" });
+        }
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [provider.plans, isCarouselPaused]);
 
   const handleOpenAuthModal = (mode: "login" | "signup") => {
     setAuthMode(mode);
@@ -457,16 +459,40 @@ export default function SingleProviderPage({
       <section className="py-20 bg-[#F8FAFC]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
-              Official {provider.name} Plans
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mt-3 mb-3">
-              Choose the Perfect {provider.name} Tier
-            </h2>
-            <p className="text-gray-500 text-sm sm:text-base">
-              All plans include custom domain setup, full spam protection, 24/7 technical support, and 0-downtime migration.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div className="text-left max-w-2xl">
+              <span className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
+                Official {provider.name} Plans
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mt-3 mb-2">
+                Choose the Perfect {provider.name} Tier
+              </h2>
+              <p className="text-gray-500 text-sm sm:text-base">
+                All plans include custom domain setup, full spam protection, 24/7 technical support, and 0-downtime migration.
+              </p>
+            </div>
+
+            {/* Carousel Navigation Buttons */}
+            {provider.plans.length > 0 && (
+              <div className="flex items-center gap-3 shrink-0 self-start md:self-end">
+                <button
+                  onClick={handleScrollLeft}
+                  className="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all active:scale-95"
+                  aria-label="Previous plan"
+                  title="Previous Plan"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleScrollRight}
+                  className="w-11 h-11 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all active:scale-95"
+                  aria-label="Next plan"
+                  title="Next Plan"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -483,7 +509,13 @@ export default function SingleProviderPage({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            <div
+              ref={planCarouselRef}
+              onScroll={handleScroll}
+              onMouseEnter={() => setIsCarouselPaused(true)}
+              onMouseLeave={() => setIsCarouselPaused(false)}
+              className="flex items-stretch gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar py-4 px-1"
+            >
               {provider.plans.map((plan, idx) => {
                 const isChecked = isPlanSelected(plan.id);
                 const isFeatured = idx === 1 || provider.plans.length === 1;
@@ -491,8 +523,8 @@ export default function SingleProviderPage({
                 return (
                   <div
                     key={plan.id}
-                    className={`rounded-2xl p-7 md:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${isFeatured
-                      ? "bg-[#0B1437] text-white shadow-2xl border border-slate-800 scale-[1.02] z-10"
+                    className={`snap-start shrink-0 w-[300px] sm:w-[340px] md:w-[370px] rounded-2xl p-7 md:p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${isFeatured
+                      ? "bg-[#0B1437] text-white shadow-2xl border border-slate-800 scale-[1.01] z-10"
                       : "bg-white text-gray-900 shadow-md hover:shadow-xl border border-gray-200 z-10"
                       }`}
                   >
@@ -583,36 +615,59 @@ export default function SingleProviderPage({
             </div>
           )}
 
+          {/* Fully Rounded Scroll Indicators */}
+          {!loading && provider.plans.length > 3 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              {provider.plans.map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  onClick={() => {
+                    if (planCarouselRef.current) {
+                      planCarouselRef.current.scrollTo({ left: dotIdx * 360, behavior: "smooth" });
+                      setActiveIndex(dotIdx);
+                    }
+                  }}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${activeIndex === dotIdx
+                    ? "w-8 bg-blue-600 shadow-sm"
+                    : "w-2.5 bg-gray-300 hover:bg-gray-400"
+                    }`}
+                  aria-label={`Go to plan ${dotIdx + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
         </div>
       </section>
 
       {/* --- PROVIDER TIER COMPARISON MATRIX SECTION --- */}
       {provider.plans.length > 0 && (
-        <section className="py-20 bg-white border-t border-gray-200/80">
+        <section className="py-20 bg-[#F8FAFC] border-t border-gray-200/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <div className="text-center max-w-3xl mx-auto mb-14">
-              <span className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-800 border border-blue-100 uppercase tracking-wider">
-                {provider.name} Tier Comparison
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mt-3 mb-3">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#0B1437] via-[#14214D] to-[#0B1437] text-blue-200 border border-blue-400/30 text-xs font-extrabold uppercase tracking-wider mb-4 shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                <span>{provider.name} Tier Comparison</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-3">
                 Compare All {provider.name} Plans Side-by-Side
               </h2>
-              <p className="text-gray-500 text-sm sm:text-base">
+              <p className="text-gray-600 text-sm sm:text-base">
                 Detailed feature-by-feature breakdown of all {provider.name} plans to help you choose the right tier for your organization.
               </p>
             </div>
 
-            <div className="overflow-x-auto pb-4">
-              <table className="w-full border-collapse bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto rounded-3xl border border-gray-200 shadow-xl bg-white">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50/80">
-                    <th className="p-6 text-left w-64 min-w-[220px] text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <tr className="bg-gradient-to-r from-[#0B1437] via-[#14214D] to-[#0B1437] text-white border-b border-slate-800">
+                    <th className="p-6 text-left w-64 min-w-[220px] text-xs font-extrabold text-white-200 uppercase tracking-wider">
                       Provider Name
                     </th>
                     {provider.plans.map((p) => (
                       <th key={p.id} className="p-6 text-left min-w-[240px]">
-                        <div className="text-base font-extrabold text-gray-900">{provider.name}</div>
+                        <div className="text-sm text-white font-medium">{provider.name}</div>
                       </th>
                     ))}
                   </tr>
@@ -620,22 +675,21 @@ export default function SingleProviderPage({
 
                 <tbody className="divide-y divide-gray-100 text-xs font-medium text-gray-700">
                   {/* Subtitle Row */}
-                  <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40">
+                  <tr className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-6 font-bold text-gray-900 bg-gray-50/60">
                       Plan Subtitle
                     </td>
                     {provider.plans.map((p) => (
-                      <td key={p.id} className="p-6 font-semibold text-blue-700">
+                      <td key={p.id} className="p-6 font-bold text-blue-800 text-sm">
                         {p.planName}
                       </td>
                     ))}
                   </tr>
 
                   {/* Storage */}
-                  <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40 flex items-center gap-2">
-
-                      <span>Mailbox Storage</span>
+                  <tr className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-6 font-bold text-gray-900 bg-gray-50/60">
+                      Mailbox Storage
                     </td>
                     {provider.plans.map((p) => (
                       <td key={p.id} className="p-6 font-bold text-gray-900">
@@ -645,29 +699,29 @@ export default function SingleProviderPage({
                   </tr>
 
                   {/* Price Row */}
-                  <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40">
+                  <tr className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-6 font-bold text-gray-900 bg-gray-50/60">
                       Plan Price
                     </td>
                     {provider.plans.map((p) => (
-                      <td key={p.id} className="p-6 font-extrabold text-blue-600 text-sm">
-                        {p.price} <span className="text-xs text-gray-500 font-normal">{p.period}</span>
+                      <td key={p.id} className="p-6 font-extrabold text-[#0B1437] text-base">
+                        {p.price} <span className="text-xs text-gray-500 font-medium">{p.period}</span>
                       </td>
                     ))}
                   </tr>
 
                   {/* Key Included Features */}
-                  <tr>
-                    <td className="p-6 font-bold text-gray-900 bg-gray-50/40 align-top">
+                  <tr className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-6 font-bold text-gray-900 bg-gray-50/60 align-top">
                       Key Included Features
                     </td>
                     {provider.plans.map((p) => (
                       <td key={p.id} className="p-6 align-top">
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           {p.features.map((feat, idx) => (
                             <div key={idx} className="flex items-start gap-2">
                               <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                              <span className="leading-relaxed">{feat}</span>
+                              <span className="leading-relaxed text-gray-700 font-medium">{feat}</span>
                             </div>
                           ))}
                         </div>
@@ -676,7 +730,7 @@ export default function SingleProviderPage({
                   </tr>
 
                   {/* Action Row */}
-                  <tr className="bg-gray-50/80">
+                  <tr className="bg-slate-50/80">
                     <td className="p-6 font-bold text-gray-900">
                       Select Plan
                     </td>
@@ -684,7 +738,7 @@ export default function SingleProviderPage({
                       <td key={p.id} className="p-6">
                         <Link
                           href={`/enquiryForm?provider=${encodeURIComponent(provider.name)}&plan=${encodeURIComponent(`${p.planName} (${p.price})`)}&providerId=${encodeURIComponent(p.id)}`}
-                          className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
+                          className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-[#0B1437] via-[#1A2859] to-[#0B1437] hover:from-[#1A2859] hover:to-[#0B1437] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg border border-slate-700/50 transition-all duration-300 active:scale-95"
                         >
                           <span>Enquiry Now</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -699,6 +753,9 @@ export default function SingleProviderPage({
           </div>
         </section>
       )}
+
+      {/* --- OFFICIAL INCLUDED APPS & FEATURES SECTION --- */}
+      <GoogleAppsIncludedSection providerSlug={normalizedSlug} />
 
       {/* --- WHY CHOOSE THIS PROVIDER SECTION --- */}
       <section className="py-20 bg-white border-t border-gray-200/80">

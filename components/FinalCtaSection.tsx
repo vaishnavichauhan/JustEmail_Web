@@ -20,7 +20,7 @@ export default function FinalCtaSection({
               Ready to Upgrade Your Business Email?
             </h3>
             <p className="text-xs sm:text-sm text-slate-300">
-              Deploy official Google Workspace, Microsoft 365, Zoho, or Titan mailboxes with zero downtime.
+              Deploy official Google Workspace, Microsoft 365, Rediffmail, or Titan mailboxes with zero downtime.
             </p>
           </div>
 
