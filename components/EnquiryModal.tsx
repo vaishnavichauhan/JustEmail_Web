@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, CheckCircle2, AlertCircle, Phone, Mail, User, FileText, Sparkles } from "lucide-react";
+import { X, Send, CheckCircle2, AlertCircle, Phone, Mail, User, FileText, Sparkles, ReceiptText } from "lucide-react";
 
 interface EnquiryModalProps {
   isOpen: boolean;
@@ -14,6 +14,7 @@ export default function EnquiryModal({ isOpen, onClose }: EnquiryModalProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
+  const [planType, setPlanType] = useState<"new" | "renew">("new");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -66,6 +67,7 @@ export default function EnquiryModal({ isOpen, onClose }: EnquiryModalProps) {
           alternativeEmail: email.trim(),
           provider: "General Enquiry",
           plan: "Custom Inquiry",
+          planType: planType,
           userCount: 1,
         }),
       });
@@ -90,6 +92,7 @@ export default function EnquiryModal({ isOpen, onClose }: EnquiryModalProps) {
     setEmail("");
     setPhone("");
     setMessage("");
+    setPlanType("new");
     setErrorMessage("");
     setSubmittedData(null);
     onClose();
@@ -158,6 +161,9 @@ export default function EnquiryModal({ isOpen, onClose }: EnquiryModalProps) {
                 <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 max-w-xs mx-auto">
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Enquiry Reference ID</div>
                   <div className="text-lg font-black text-blue-700 mt-0.5">{submittedData.enquiryId}</div>
+                  <div className="mt-2 text-xs font-bold text-gray-700">
+                    Plan Type: <span className="text-blue-600 font-extrabold">{planType === "renew" ? "Renew Plan" : "New Plan"}</span>
+                  </div>
                 </div>
 
                 <div className="pt-4">
@@ -177,6 +183,57 @@ export default function EnquiryModal({ isOpen, onClose }: EnquiryModalProps) {
                     <span>{errorMessage}</span>
                   </div>
                 )}
+
+                {/* Plan Type Selection Checkboxes (New Plan / Renew Plan) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-extrabold text-gray-700 flex items-center gap-1.5">
+                    <ReceiptText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Plan Type *</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3 pt-0.5">
+                    {/* New Plan Checkbox Option */}
+                    <label
+                      onClick={() => setPlanType("new")}
+                      className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all cursor-pointer select-none ${
+                        planType === "new"
+                          ? "border-blue-600 bg-blue-50/70 text-gray-900 shadow-xs"
+                          : "border-gray-200 bg-gray-50/50 hover:border-gray-300 text-gray-600"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={planType === "new"}
+                        onChange={() => setPlanType("new")}
+                        className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-extrabold text-gray-900">New Plan</span>
+                        <span className="text-[10px] text-gray-500 font-medium">Fresh Setup</span>
+                      </div>
+                    </label>
+
+                    {/* Renew Plan Checkbox Option */}
+                    <label
+                      onClick={() => setPlanType("renew")}
+                      className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all cursor-pointer select-none ${
+                        planType === "renew"
+                          ? "border-indigo-600 bg-indigo-50/70 text-gray-900 shadow-xs"
+                          : "border-gray-200 bg-gray-50/50 hover:border-gray-300 text-gray-600"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={planType === "renew"}
+                        onChange={() => setPlanType("renew")}
+                        className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 cursor-pointer"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-extrabold text-gray-900">Renew Plan</span>
+                        <span className="text-[10px] text-gray-500 font-medium">Renewal</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
 
                 {/* 1. Full Name */}
                 <div className="space-y-1.5">

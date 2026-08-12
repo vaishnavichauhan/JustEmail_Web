@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       notes,
       provider,
       plan,
+      planType,
       providerId,
       userCount,
     } = body;
@@ -76,6 +77,7 @@ export async function POST(req: Request) {
         notes: notes?.trim() || "",
         provider: provider || null,
         plan: plan || null,
+        planType: planType === "renew" ? "Renew" : "New",
         providerId: providerId || null,
         userCount: Number(userCount) || 1,
       });

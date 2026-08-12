@@ -131,6 +131,8 @@ function EnquiryFormContent() {
     const domainParam = searchParams.get("domain") || "";
 
     // Form State
+    const rawPlanType = (searchParams.get("type") || searchParams.get("planType") || "new").toLowerCase();
+    const [planType, setPlanType] = useState<"new" | "renew">(rawPlanType === "renew" ? "renew" : "new");
     const [organizationName, setOrganizationName] = useState("");
     const [domain, setDomain] = useState(domainParam);
 
@@ -259,6 +261,7 @@ function EnquiryFormContent() {
                     notes: notes.trim(),
                     provider: providerParam,
                     plan: planParam,
+                    planType: planType,
                     providerId: providerIdParam,
                     userCount: userCount || 1,
                 }),
@@ -284,7 +287,7 @@ function EnquiryFormContent() {
         return (
             <div className="min-h-screen bg-[#F8FAFC] text-gray-900 flex flex-col font-sans">
                 <Navbar />
-                <main className="flex-1 py-16 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto w-full flex items-center justify-center">
+                <main className="flex-1 pt-25 pb-16 md:pt-40 px-4 sm:px-6 lg:px-8 max-w-2xl mx-auto w-full flex items-center justify-center">
                     <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gray-200 shadow-xl text-center space-y-6 w-full animate-fadeIn">
                         <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
                             <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
@@ -314,6 +317,12 @@ function EnquiryFormContent() {
                             <div className="flex justify-between border-b border-gray-200 pb-2">
                                 <span>Requested Plan:</span>
                                 <span className="font-bold text-indigo-700">{providerParam} ({planParam})</span>
+                            </div>
+                            <div className="flex justify-between border-b border-gray-200 pb-2">
+                                <span>Plan Type:</span>
+                                <span className="font-extrabold uppercase px-2 py-0.5 rounded text-[10px] bg-blue-100 text-blue-800">
+                                    {planType === "renew" ? "Renew Plan (Renewal)" : "New Plan (Fresh Setup)"}
+                                </span>
                             </div>
                             <div className="flex justify-between">
                                 <span>Estimated Annual Total (inc. 18% GST):</span>
@@ -351,7 +360,7 @@ function EnquiryFormContent() {
             <Navbar />
 
             {/* Hero Header Banner */}
-            <section className="bg-[#0B1437] text-white py-10 px-4 sm:px-6 lg:px-8 border-b border-slate-800 relative overflow-hidden">
+            <section className="bg-[#0B1437] text-white pt-32 pb-12 md:pt-40 md:pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 pointer-events-none" />
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                     <div>
@@ -392,6 +401,86 @@ function EnquiryFormContent() {
               LEFT COLUMN: ENQUIRY FORM INPUT CARDS
              ========================================== */}
                     <div className="lg:col-span-7 space-y-6">
+
+                        {/* PLAN TYPE SELECTION CARD (NEW VS RENEW CHECKBOXES) */}
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+                                        <ReceiptText className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-extrabold text-gray-900">
+                                            Plan Purchase Type
+                                        </h3>
+                                        <p className="text-xs text-gray-500 font-medium">
+                                            Select whether you need a new plan setup or plan renewal.
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-wider text-rose-500 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">
+                                    Required *
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                {/* NEW PLAN CHECKBOX OPTION */}
+                                <label
+                                    onClick={() => setPlanType("new")}
+                                    className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer select-none ${
+                                        planType === "new"
+                                            ? "border-blue-600 bg-blue-50/60 text-gray-900 shadow-xs"
+                                            : "border-gray-200 bg-gray-50/50 hover:border-gray-300 text-gray-600"
+                                    }`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={planType === "new"}
+                                        onChange={() => setPlanType("new")}
+                                        className="mt-0.5 h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
+                                    />
+                                    <div>
+                                        <div className="text-xs font-black flex items-center gap-1.5 text-gray-900">
+                                            <span>New Plan</span>
+                                            <span className="px-2 py-0.5 text-[9px] font-extrabold bg-blue-600 text-white rounded-md uppercase">
+                                                Fresh Setup
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-gray-500 font-medium mt-1 leading-relaxed">
+                                            Order new corporate email mailboxes & fresh domain configuration.
+                                        </p>
+                                    </div>
+                                </label>
+
+                                {/* RENEW PLAN CHECKBOX OPTION */}
+                                <label
+                                    onClick={() => setPlanType("renew")}
+                                    className={`flex items-start gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer select-none ${
+                                        planType === "renew"
+                                            ? "border-indigo-600 bg-indigo-50/60 text-gray-900 shadow-xs"
+                                            : "border-gray-200 bg-gray-50/50 hover:border-gray-300 text-gray-600"
+                                    }`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={planType === "renew"}
+                                        onChange={() => setPlanType("renew")}
+                                        className="mt-0.5 h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 cursor-pointer"
+                                    />
+                                    <div>
+                                        <div className="text-xs font-black flex items-center gap-1.5 text-gray-900">
+                                            <span>Renew Plan</span>
+                                            <span className="px-2 py-0.5 text-[9px] font-extrabold bg-indigo-600 text-white rounded-md uppercase">
+                                                Renewal
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-gray-500 font-medium mt-1 leading-relaxed">
+                                            Renew existing active email licenses or domain service.
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
 
                         {/* 1. ORGANIZATION & DOMAIN DETAILS CARD */}
                         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm space-y-5">
@@ -695,8 +784,10 @@ function EnquiryFormContent() {
                                     <span className="text-[10px] font-black uppercase text-blue-400 tracking-wider">
                                         Selected Email Provider
                                     </span>
-                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-600 text-white uppercase">
-                                        Requested
+                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase ${
+                                        planType === "renew" ? "bg-indigo-600 text-white" : "bg-blue-600 text-white"
+                                    }`}>
+                                        {planType === "renew" ? "Renew Plan" : "New Plan"}
                                     </span>
                                 </div>
                                 <div className="text-sm font-extrabold text-white">

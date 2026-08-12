@@ -387,7 +387,7 @@ export default function AdminPage() {
     price: "₹136",
     period: "/ user / month",
     billingNote: "Billed annually",
-      storage: "30", // Default storage value
+    storage: "30", // Default storage value
     storageUnit: "GB",
     uptime: "99.9% SLA",
     recommendedUsers: "1 - 300 Users",
@@ -474,8 +474,8 @@ export default function AdminPage() {
     setNewFeatureInput("");
     setProviderPriceError("");
     const numericPriceOnly = p.price ? String(p.price).replace(/[^\d.]/g, "") : "136";
-      const numericStorageOnly = p.storage ? String(p.storage).replace(/[^\d]/g, "") : "30"; 
-      const detectedUnit = /tb/i.test(String(p.storage || "")) ? "TB" : "GB";
+    const numericStorageOnly = p.storage ? String(p.storage).replace(/[^\d]/g, "") : "30";
+    const detectedUnit = /tb/i.test(String(p.storage || "")) ? "TB" : "GB";
 
     const isWithoutTeams = (p.subtitle || "").toLowerCase().includes("without teams") || p.teamsOption === "Without Teams";
     setTeamsOption(isWithoutTeams ? "Without Teams" : "With Teams");
@@ -492,8 +492,8 @@ export default function AdminPage() {
       price: numericPriceOnly,
       period: p.period || "/ user / month",
       billingNote: p.billingNote || "Billed annually",
-        storage: numericStorageOnly,
-        storageUnit: detectedUnit,
+      storage: numericStorageOnly,
+      storageUnit: detectedUnit,
       uptime: p.uptime || "99.9% SLA",
       recommendedUsers: p.recommendedUsers || "1 - 300 Users",
       logoType: p.logoType || "google",
@@ -1431,13 +1431,17 @@ export default function AdminPage() {
                                     {enq.phone_number?.startsWith("+91") ? enq.phone_number : `+91 ${enq.phone_number}`}
                                   </td>
                                   <td className="p-4 whitespace-nowrap">
-                                    {enq.provider || enq.plan ? (
-                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase">
-                                        {enq.provider || enq.plan}
+                                    <div className="space-y-1">
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase block w-max">
+                                        {enq.provider || enq.plan || "General Enquiry"}
                                       </span>
-                                    ) : (
-                                      <span className="text-gray-400 text-[11px]">General Enquiry</span>
-                                    )}
+                                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase block w-max ${String(enq.plan_type || "").toLowerCase() === "renew"
+                                        ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                                        : "bg-blue-100 text-blue-800 border border-blue-200"
+                                        }`}>
+                                        {String(enq.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}
+                                      </span>
+                                    </div>
                                   </td>
                                   <td className="p-4 text-gray-500 text-[11px] whitespace-nowrap">
                                     {enq.created_at ? new Date(enq.created_at).toLocaleString() : "Recently"}
@@ -1625,11 +1629,10 @@ export default function AdminPage() {
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => handleToggleHomeStatus(p)}
-                                  className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold border flex items-center gap-1 transition-all ${
-                                    p.showOnHome !== false
-                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                                      : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
-                                  }`}
+                                  className={`px-2.5 py-1 rounded-xl text-[10px] font-extrabold border flex items-center gap-1 transition-all ${p.showOnHome !== false
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                    : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                                    }`}
                                   title={p.showOnHome !== false ? "Visible on Homepage (Click to hide from Home)" : "Hidden from Homepage (Click to show on Home)"}
                                 >
                                   <Home className="w-3 h-3" />
@@ -1703,8 +1706,8 @@ export default function AdminPage() {
                       ))}
                     </div>
                   )}
-              </div>
-            )}
+                </div>
+              )}
 
               {/* ==========================================
                   10. SETTINGS SECTION (WHITE THEME + NAVY GRADIENT BUTTON)
@@ -1914,7 +1917,7 @@ export default function AdminPage() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 relative z-10">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
                         {/* Name */}
                         <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
                           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Client Name</span>
@@ -1924,10 +1927,23 @@ export default function AdminPage() {
                           <div className="text-[10px] text-slate-400 font-medium">Contact Person</div>
                         </div>
 
+                        {/* Plan Type (New Plan vs Renew Plan) */}
+                        <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Type</span>
+                          <div className="text-sm font-black text-white">
+                            <span className={` py-0.5 rounded text-sm font-extrabold uppercase}`}>
+                              {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">
+                            {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "License Renewal" : "Fresh Setup"}
+                          </div>
+                        </div>
+
                         {/* Phone */}
                         <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
                           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Phone Number</span>
-                          <div className="text-sm font-black text-emerald-400">
+                          <div className="text-sm font-black text-white-400">
                             {selectedEnquiryModal.phone_number?.startsWith("+91") ? selectedEnquiryModal.phone_number : `+91 ${selectedEnquiryModal.phone_number}`}
                           </div>
                           <div className="text-[10px] text-slate-400 font-medium">Mobile (India +91)</div>
@@ -1936,7 +1952,7 @@ export default function AdminPage() {
                         {/* Email */}
                         <div className="bg-slate-950/90 p-4 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
                           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Email Address</span>
-                          <div className="text-sm font-black text-blue-300 truncate" title={selectedEnquiryModal.email}>
+                          <div className="text-sm font-black text-white-300 truncate" title={selectedEnquiryModal.email}>
                             {selectedEnquiryModal.email}
                           </div>
                           <div className="text-[10px] text-slate-400 font-medium">Primary Email</div>
@@ -2043,6 +2059,9 @@ export default function AdminPage() {
                         <div>
                           <h4 className="text-sm sm:text-base font-extrabold text-white">{planTitle}</h4>
                           <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Customer Interest Plan Details</span>
+                          <div className="text-xs font-mono font-bold text-indigo-300 truncate" title={planIdDisplay}>
+                            {planIdDisplay}
+                          </div>
                         </div>
                       </div>
                       <span className="px-3 py-1 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-wider shadow-xs">
@@ -2050,8 +2069,8 @@ export default function AdminPage() {
                       </span>
                     </div>
 
-                    {/* 4 Primary Customer Interest Fields */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs relative z-10">
+                    {/* 5 Primary Customer Interest Fields including Plan Purchase Type */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs relative z-10">
                       {/* Provider Name */}
                       <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Provider Name</span>
@@ -2061,26 +2080,37 @@ export default function AdminPage() {
 
                       {/* Provider Subtitle */}
                       <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Provider Subtitle</span>
-                        <div className="text-sm font-black text-blue-300">{providerSubtitleDisplay}</div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block"> Subtitle</span>
+                        <div className="text-sm font-black text-white-300">{providerSubtitleDisplay}</div>
                         <div className="text-[10px] text-slate-400 font-medium">Plan Tier</div>
+                      </div>
+
+                      {/* Plan Purchase Type (New vs Renew) */}
+                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Type</span>
+
+                        <div className="text-sm font-black text-white-300">{String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}</div>
+                        {/* <span className={`px-2 py-0.5 border rounded text-xs font-black uppercase tracking-wider ${String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew"
+                            ? "bg-black-600 text-white"
+                            : "bg-blue-600 text-white"
+                            }`}>
+                            {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan" : "New Plan"}
+                          </span> */}
+
+                        <div className="text-[10px] text-slate-400 font-medium">
+                          {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "License Renewal" : "Fresh Setup"}
+                        </div>
                       </div>
 
                       {/* Plan Price */}
                       <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Price</span>
-                        <div className="text-sm font-black text-emerald-400">{priceDisplay}</div>
+                        <div className="text-sm font-black text-white-400">{priceDisplay}</div>
                         <div className="text-[10px] text-slate-400 font-medium">Billed annually</div>
                       </div>
 
                       {/* Plan ID */}
-                      <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-2xs space-y-1">
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan ID</span>
-                        <div className="text-xs font-mono font-bold text-indigo-300 truncate" title={planIdDisplay}>
-                          {planIdDisplay}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-medium">Unique Plan Reference</div>
-                      </div>
+
                     </div>
                   </div>
 
@@ -2154,6 +2184,15 @@ export default function AdminPage() {
                       <div className="space-y-1 text-gray-700 text-xs">
                         <div><strong>Company:</strong> {selectedEnquiryModal.organization_name}</div>
                         <div><strong>Domain:</strong> <span className="text-blue-600 font-bold">{selectedEnquiryModal.domain}</span></div>
+                        <div>
+                          <strong>Plan Purchase Type:</strong>{" "}
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew"
+                            ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                            : "bg-blue-100 text-blue-800 border border-blue-200"
+                            }`}>
+                            {String(selectedEnquiryModal.plan_type || "").toLowerCase() === "renew" ? "Renew Plan (Renewal)" : "New Plan (Fresh Setup)"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -2364,8 +2403,8 @@ export default function AdminPage() {
                       "Professional",
                       "Enterprise",
                     ].includes(providerFormData.subtitle) && (
-                      <option key="custom" value={providerFormData.subtitle} />
-                    )}
+                        <option key="custom" value={providerFormData.subtitle} />
+                      )}
                   </datalist>
                 </div>
 
