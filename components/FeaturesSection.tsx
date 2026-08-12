@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Mail, 
-  RefreshCw, 
-  Globe, 
-  Sliders, 
-  Database, 
-  CheckCircle2, 
-  ArrowRight, 
-  ShieldCheck, 
-  Zap, 
-  Users, 
-  Lock, 
+import {
+  Mail,
+  RefreshCw,
+  Globe,
+  Sliders,
+  Database,
+  CheckCircle2,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Users,
+  Lock,
   FileCheck,
   HardDrive,
   Cpu,
@@ -26,10 +26,10 @@ export default function FeaturesSection() {
   return (
     <section className="py-20 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -37,7 +37,7 @@ export default function FeaturesSection() {
           >
             Core Platform Capability
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -55,7 +55,7 @@ export default function FeaturesSection() {
         <div id="business-emails" className="scroll-mt-32 mb-28">
           <div className="glass-card rounded-3xl p-8 lg:p-12 border border-gray-200/90 shadow-card bg-gradient-to-br from-white via-blue-50/20 to-white">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              
+
               <div className="lg:col-span-6 space-y-6">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
                   <Mail className="w-6 h-6" />
@@ -159,7 +159,7 @@ export default function FeaturesSection() {
         <div id="cross-tenant" className="scroll-mt-32 mb-28">
           <div className="glass-card rounded-3xl p-8 lg:p-12 border border-gray-200/90 shadow-card bg-gradient-to-br from-white via-slate-50 to-white">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              
+
               <div className="lg:col-span-6 order-2 lg:order-1">
                 <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-xl space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
@@ -182,7 +182,7 @@ export default function FeaturesSection() {
 
                     <div className="flex flex-col items-center">
                       <div className="w-full h-1 bg-primary relative overflow-hidden rounded-full mb-1">
-                        <motion.div 
+                        <motion.div
                           className="h-full bg-navyBlue w-1/2"
                           animate={{ x: ["-100%", "200%"] }}
                           transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
@@ -252,7 +252,7 @@ export default function FeaturesSection() {
         <div id="domains" className="scroll-mt-32 mb-28">
           <div className="glass-card rounded-3xl p-8 lg:p-12 border border-gray-200/90 shadow-card bg-gradient-to-br from-white via-blue-50/20 to-white">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              
+
               <div className="lg:col-span-6 space-y-6">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
                   <Globe className="w-6 h-6" />
@@ -308,7 +308,7 @@ export default function FeaturesSection() {
                 <div className="bg-navyBlue text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden">
                   <div className="text-xs font-extrabold uppercase tracking-widest text-primary mb-2">Central Domain Hub</div>
                   <h4 className="text-2xl font-bold mb-4">Multi-Domain Portfolio</h4>
-                  
+
                   <div className="space-y-3 font-sans">
                     <div className="p-3 bg-white/10 rounded-xl flex items-center justify-between text-xs">
                       <span className="font-semibold text-white">company.com</span>
@@ -340,7 +340,7 @@ export default function FeaturesSection() {
         <div id="management" className="scroll-mt-32 mb-28">
           <div className="glass-card rounded-3xl p-8 lg:p-12 border border-gray-200/90 shadow-card bg-gradient-to-br from-white via-slate-50 to-white">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              
+
               <div className="lg:col-span-6 order-2 lg:order-1">
                 <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-xl space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100">
@@ -412,7 +412,7 @@ export default function FeaturesSection() {
         <div id="backup" className="scroll-mt-32">
           <div className="glass-card rounded-3xl p-8 lg:p-12 border border-gray-200/90 shadow-card bg-gradient-to-br from-white via-blue-50/20 to-white">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              
+
               <div className="lg:col-span-6 space-y-6">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
                   <Database className="w-6 h-6" />

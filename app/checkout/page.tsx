@@ -6,20 +6,20 @@ import Navbar from "@/components/Navbar";
 import AuthModal from "@/components/AuthModal";
 import Footer from "@/components/Footer";
 import { useCart, CartItem } from "@/lib/cartContext";
-import { 
-  ShieldCheck, 
-  Lock, 
-  CreditCard, 
-  CheckCircle2, 
-  ArrowRight, 
-  ArrowLeft, 
-  HardDrive, 
-  Zap, 
-  Check, 
-  Building2, 
-  Mail, 
-  Phone, 
-  Globe, 
+import {
+  ShieldCheck,
+  Lock,
+  CreditCard,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  HardDrive,
+  Zap,
+  Check,
+  Building2,
+  Mail,
+  Phone,
+  Globe,
   User,
   Trash2,
   ShoppingCart,
@@ -299,8 +299,8 @@ function CheckoutContent() {
             Checkout & Mailbox Deployment
           </h1>
           <p className="text-sm text-slate-300 font-normal mt-2">
-            {activeCartItems.length > 0 
-              ? `${activeCartItems.length} Business Email Plan${activeCartItems.length > 1 ? "s" : ""} selected in your cart.` 
+            {activeCartItems.length > 0
+              ? `${activeCartItems.length} Business Email Plan${activeCartItems.length > 1 ? "s" : ""} selected in your cart.`
               : "Your shopping cart is currently empty."}
           </p>
         </div>
@@ -355,10 +355,10 @@ function CheckoutContent() {
           ) : (
             /* --- CHECKOUT FORM & SUMMARY GRID --- */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              
+
               {/* LEFT COLUMN: Cart Items, Customer Info & Payment Form */}
               <div className="lg:col-span-7 space-y-8">
-                
+
                 {/* 1. MULTI-ITEM SHOPPING CART SUMMARY */}
                 <div className="bg-white rounded-3xl p-6 md:p-8 border border-gray-200 shadow-sm">
                   <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
@@ -542,11 +542,10 @@ function CheckoutContent() {
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("card")}
-                        className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
-                          paymentMethod === "card"
+                        className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${paymentMethod === "card"
                             ? "bg-[#0B1437] text-white border-[#0B1437] shadow-sm"
                             : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         <CreditCard className="w-4 h-4" />
                         <span>Credit / Debit</span>
@@ -555,11 +554,10 @@ function CheckoutContent() {
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("upi")}
-                        className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
-                          paymentMethod === "upi"
+                        className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${paymentMethod === "upi"
                             ? "bg-[#0B1437] text-white border-[#0B1437] shadow-sm"
                             : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         <QrCode className="w-4 h-4" />
                         <span>UPI / QR</span>
@@ -568,11 +566,10 @@ function CheckoutContent() {
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("netbanking")}
-                        className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
-                          paymentMethod === "netbanking"
+                        className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${paymentMethod === "netbanking"
                             ? "bg-[#0B1437] text-white border-[#0B1437] shadow-sm"
                             : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         <Building2 className="w-4 h-4" />
                         <span>NetBanking</span>

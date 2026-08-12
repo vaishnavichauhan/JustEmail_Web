@@ -158,14 +158,14 @@ export default function Footer() {
               >
 
                 <Link
-  href="https://www.linkedin.com/company/justemail/"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600  hover:border-blue-700 transition-all"
-  title="LinkedIn"
->
-  <Linkedin className="w-4 h-4" />
-</Link>
+                  href="https://www.linkedin.com/company/justemail/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600  hover:border-blue-700 transition-all"
+                  title="LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </Link>
               </a>
             </div>
           </div>
